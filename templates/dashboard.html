@@ -3,6 +3,12 @@
   <head>
     <meta charset="utf-8">
     <title>HydroConsole Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 20px; }
+      .charts { display: flex; gap: 40px; }
+      .chart-container { width: 300px; }
+    </style>
   </head>
   <body>
     <h1>Bienvenido, {{ user }}!</h1>
@@ -10,10 +16,22 @@
 
     <h2>Datos de sensores</h2>
     <ul>
-      <li>Nivel de agua: {{ sensors.water_level }}</li>
-      <li>Presión: {{ sensors.pressure }}</li>
-      <li>Flujo: {{ sensors.flow_rate }}</li>
+      <li>Nivel de agua actual: {{ sensors.water_level }}</li>
+      <li>Presión actual: {{ sensors.pressure }}</li>
+      <li>Flujo actual: {{ sensors.flow_rate }}</li>
     </ul>
+
+    <div class="charts">
+      <div class="chart-container">
+        <canvas id="waterChart"></canvas>
+      </div>
+      <div class="chart-container">
+        <canvas id="pressureChart"></canvas>
+      </div>
+      <div class="chart-container">
+        <canvas id="flowChart"></canvas>
+      </div>
+    </div>
 
     {% if role in ['engineer', 'admin'] %}
     <h2>Acciones</h2>
@@ -22,5 +40,49 @@
     {% else %}
     <p>No tienes permisos para controlar las compuertas.</p>
     {% endif %}
+
+    <script>
+      const history = JSON.parse('{{ history | safe }}');
+      const labels = history.water_level.map((_, i) => i + 1);
+
+      new Chart(document.getElementById('waterChart'), {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Nivel de agua (m)',
+            data: history.water_level,
+            borderColor: 'blue',
+            fill: false
+          }]
+        }
+      });
+
+      new Chart(document.getElementById('pressureChart'), {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Presión (kPa)',
+            data: history.pressure,
+            borderColor: 'red',
+            fill: false
+          }]
+        }
+      });
+
+      new Chart(document.getElementById('flowChart'), {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Flujo (m3/s)',
+            data: history.flow_rate,
+            borderColor: 'green',
+            fill: false
+          }]
+        }
+      });
+    </script>
   </body>
 </html>

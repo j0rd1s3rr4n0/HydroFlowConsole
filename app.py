@@ -1,6 +1,8 @@
 from flask import Flask, request, make_response, render_template
 import base64
 import pickle
+import json
+import random
 
 app = Flask(__name__)
 
@@ -35,13 +37,26 @@ def dashboard():
     except Exception:
         return "Invalid session cookie", 400
 
-    # Simulated sensor data
-    sensors = {
-        'water_level': '23.5m',
-        'pressure': '101.3 kPa',
-        'flow_rate': '1500 m3/s'
+    # Simulated sensor data with random history for graphs
+    history = {
+        'water_level': [round(random.uniform(22.0, 24.0), 2) for _ in range(12)],
+        'pressure': [round(random.uniform(100.0, 105.0), 2) for _ in range(12)],
+        'flow_rate': [round(random.uniform(1400, 1600), 2) for _ in range(12)],
     }
-    return render_template('dashboard.html', user=user, role=role, sensors=sensors)
+
+    sensors = {
+        'water_level': f"{history['water_level'][-1]} m",
+        'pressure': f"{history['pressure'][-1]} kPa",
+        'flow_rate': f"{history['flow_rate'][-1]} m3/s",
+    }
+
+    return render_template(
+        'dashboard.html',
+        user=user,
+        role=role,
+        sensors=sensors,
+        history=json.dumps(history)
+    )
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
