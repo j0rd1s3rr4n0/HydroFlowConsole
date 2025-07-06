@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>HydroConsole Dashboard</title>
+  </head>
+  <body>
+    <h1>Bienvenido, {{ user }}!</h1>
+    <p>Tu rol es: <strong>{{ role }}</strong></p>
+
+    <h2>Datos de sensores</h2>
+    <ul>
+      <li>Nivel de agua: {{ sensors.water_level }}</li>
+      <li>Presión: {{ sensors.pressure }}</li>
+      <li>Flujo: {{ sensors.flow_rate }}</li>
+    </ul>
+
+    {% if role in ['engineer', 'admin'] %}
+    <h2>Acciones</h2>
+    <button>Abrir compuertas</button>
+    <button>Cerrar compuertas</button>
+    {% else %}
+    <p>No tienes permisos para controlar las compuertas.</p>
+    {% endif %}
+  </body>
+</html>
