@@ -53,12 +53,14 @@ def update_state():
             state['flow'] = 5.0
             state['water_level'] = max(state['water_level'] - state['flow'], 0)
             state['pressure'] = 30 + state['water_level'] * 0.6
+            if state['pressure'] > 100:
+                state['dam_broken'] = True
         else:
-            base_inflow = 0.5
+            base_inflow = 0.2
             if state['weather'] == 'lluvia':
-                inflow = base_inflow + 0.5
+                inflow = base_inflow + 0.8
             elif state['weather'] == 'lluvia fuerte':
-                inflow = base_inflow + 2.0
+                inflow = base_inflow + 2.5
             else:
                 inflow = base_inflow
 
@@ -67,6 +69,8 @@ def update_state():
             state['water_level'] = max(state['water_level'], 0)
             state['flow'] = outflow
             state['pressure'] = 30 + state['water_level'] * 0.6
+            if state['pressure'] > 100:
+                state['dam_broken'] = True
 
             if state['water_level'] > MAX_LEVEL:
                 if not any(state['gates']):
@@ -112,6 +116,14 @@ def login(user):
     cookie = create_cookie(user)
     resp = make_response(redirect('/'))
     resp.set_cookie('session', cookie)
+    return resp
+
+
+@app.route('/logout')
+def logout():
+    """Elimina la cookie de sesion"""
+    resp = make_response(redirect('/'))
+    resp.delete_cookie('session')
     return resp
 
 

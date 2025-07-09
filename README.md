@@ -11,6 +11,7 @@ Demo de presa hidraulica vulnerable a deserialización.
    python app.py
    ```
 3. Entra con `/login/<usuario>` (por ejemplo `/login/eng_jose`).
-4. Accede a `/` para visualizar el mapa de la presa con zona de temporal y varios gráficos de sensores. Podrás controlar compuertas si tu rol lo permite.
+4. Accede a `/` para visualizar el mapa de la presa con zona de temporal, el pueblo y varios gráficos de sensores. Podrás controlar compuertas si tu rol lo permite.
+5. Usa `/logout` para cerrar la sesión y borrar la cookie.
 
 La cookie `session` no está firmada y usa `pickle`, por lo que puede modificarse para ejecutar código arbitrario al deserializar.
