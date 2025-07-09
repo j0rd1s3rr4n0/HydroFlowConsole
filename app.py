@@ -438,7 +438,8 @@ def fail_route():
 
 @app.errorhandler(500)
 def fail(e):
-    return "<h1>500 Internal Server Error</h1><p>flag{electric_power}</p>", 500
+    """Mostrar una página de error simple con la flag"""
+    return "<h1>500</h1><p>flag{electric_power}</p>", 500
 
 
 if __name__ == '__main__':
