@@ -16,9 +16,14 @@
     <li><i class="bi bi-speedometer"></i> Presión: {{ "%.2f"|format(state['pressure']) }} bar</li>
     <li><i class="bi bi-tropical-storm"></i> Caudal de salida: {{ "%.2f"|format(state['flow']) }} m³/s</li>
     <li><i class="bi bi-box"></i> Peso aprox.: {{ "%.2f"|format(state['water_level']*1000) }} t</li>
+    <li><i class="bi bi-speedometer"></i> RPM promedio: {{ "%.0f"|format(state['rpm_avg']) }}</li>
+    <li><i class="bi bi-lightning-fill"></i> Potencia total: {{ "%.2f"|format(state['power']) }} MW</li>
   </ul>
   {% if state['water_level'] > 250 or state['pressure'] > 280 %}
   <div class="alert alert-danger">⚠️ Riesgo crítico de colapso</div>
+  {% endif %}
+  {% if state['rpm_avg'] > 1200 %}
+  <div class="alert alert-warning">⚠️ Turbinas al límite de revoluciones</div>
   {% endif %}
 
   <h2>Compuertas</h2>
@@ -48,7 +53,9 @@
       datasets: [
         {label: 'Nivel', data: history.water_level, borderColor: 'blue', fill:false},
         {label: 'Presión', data: history.pressure, borderColor: 'red', fill:false},
-        {label: 'Caudal', data: history.flow, borderColor: 'green', fill:false}
+        {label: 'Caudal', data: history.flow, borderColor: 'green', fill:false},
+        {label: 'RPM', data: history.rpm, borderColor: 'brown', fill:false},
+        {label: 'Potencia', data: history.power, borderColor: 'purple', fill:false}
       ]
     };
     new Chart(document.getElementById('chart'), {type:'line', data});

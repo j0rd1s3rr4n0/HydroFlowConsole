@@ -1,6 +1,6 @@
 # HydroConsole
 
-Demo de presa hidraulica vulnerable a deserialización.
+Demo de presa hidraulica y central hidroelectrica vulnerable a deserialización.
 
 1. Instala dependencias:
    ```bash
@@ -17,6 +17,8 @@ Demo de presa hidraulica vulnerable a deserialización.
 
 El tablero muestra los valores numéricos de nivel de agua, presión y caudal en todo momento. Cuando el nivel supera los 250 m o la presión pasa de 280 bar aparece un aviso de peligro y la presa puede romperse e inundar la ciudad.
 
-Tambien se registran la temperatura del agua y de cada turbina, asi como la potencia generada cuando las compuertas estan abiertas. El panel incluye imagenes simuladas de las camaras de cada turbina para mayor realismo.
+ Tambien se registran la temperatura del agua y de cada turbina, la velocidad de rotacion (rpm) y la energia generada por la central hidroelectrica. Cada puerta dispone de una turbina asociada.
+
+ Si la suma de potencia supera los 200 MW el sistema muestra un error 500 con el texto `flag{electric_power}` para simular un fallo catastrófico en la red.
 
 La cookie `session` no está firmada y usa `pickle`, por lo que puede modificarse para ejecutar código arbitrario al deserializar.

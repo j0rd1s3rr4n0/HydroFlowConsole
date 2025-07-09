@@ -4,7 +4,7 @@ import json
 import time
 import random
 from threading import Thread
-from flask import Flask, request, make_response, redirect, render_template
+from flask import Flask, request, make_response, redirect, render_template, abort
 
 app = Flask(__name__)
 
@@ -17,6 +17,9 @@ WEIGHT_WARN = 60000.0
 WEIGHT_MAX = 80000.0
 PRESSURE_WARN = WEIGHT_WARN / 1000 * 1.12  # bar equivalentes
 PRESSURE_MAX = WEIGHT_MAX / 1000 * 1.12
+RPM_WARN = 1200.0
+RPM_MAX = 1500.0
+POWER_MAX = 200.0
 state = {
     'gates': [False] * NUM_GATES,  # False = cerrada
     'water_level': 50.0,           # metros
@@ -27,6 +30,8 @@ state = {
     'wind_speed': 5.0,        # km/h (simple aproximacion)
     'water_temp': 15.0,       # temperatura del agua
     'turbine_temps': [20.0] * NUM_GATES,
+    'turbine_rpm': [0.0] * NUM_GATES,
+    'turbine_broken': [False] * NUM_GATES,
     'power': 0.0,             # produccion electrica en MW
     'rain_timer': 0,
     'dam_broken': False,
@@ -40,7 +45,8 @@ state = {
         'wind_speed': [],
         'water_temp': [],
         'turbine_temp': [],
-        'power': []
+        'power': [],
+        'rpm': []
     }
 }
 
@@ -84,15 +90,26 @@ def update_state():
         state['water_temp'] += random.uniform(-0.1, 0.1)
         state['water_temp'] = max(4, min(state['water_temp'], 30))
 
-        # actualiza temperatura de cada turbina dependiendo de si hay flujo
+        # actualiza temperatura y rpm de cada turbina dependiendo del flujo
+        total_power = 0.0
         for i, open_ in enumerate(state['gates']):
-            if open_ and not state['dam_broken']:
-                # la turbina se calienta ligeramente cuando produce energia
+            if open_ and not state['dam_broken'] and not state['turbine_broken'][i]:
+                # la turbina se calienta ligeramente y gira segun la presion
                 state['turbine_temps'][i] += 0.3
+                target_rpm = state['pressure'] * 8
+                state['turbine_rpm'][i] += (target_rpm - state['turbine_rpm'][i]) * 0.1
             else:
-                # se enfria hacia la temperatura del agua
+                # se enfria y reduce rpm hacia cero
                 state['turbine_temps'][i] += (state['water_temp'] - state['turbine_temps'][i]) * 0.1
+                state['turbine_rpm'][i] *= 0.9
+
             state['turbine_temps'][i] = max(state['water_temp'], min(state['turbine_temps'][i], 90))
+            if state['turbine_rpm'][i] > RPM_MAX:
+                state['turbine_broken'][i] = True
+                state['turbine_rpm'][i] = 0
+
+            if not state['turbine_broken'][i]:
+                total_power += state['turbine_rpm'][i] * 0.05
 
         if state['dam_broken']:
             # tras la rotura, el agua sale sin control pero sin generacion
@@ -114,7 +131,7 @@ def update_state():
             state['water_level'] = max(state['water_level'], 0)
             state['flow'] = outflow
             state['pressure'] = state['water_level'] * 1.12
-            state['power'] = outflow * 2.5  # produccion ficticia
+            state['power'] = total_power
             if state['pressure'] >= 280:
                 state['dam_broken'] = True
 
@@ -140,6 +157,8 @@ def update_state():
         # para graficar se usa la temperatura media de las turbinas
         avg_turb = sum(state['turbine_temps'])/NUM_GATES
         state['history']['turbine_temp'].append(avg_turb)
+        avg_rpm = sum(state['turbine_rpm'])/NUM_GATES
+        state['history']['rpm'].append(avg_rpm)
         state['history']['power'].append(state['power'])
         if len(state['history']['time']) > 50:
             for k in state['history']:
@@ -191,6 +210,9 @@ def index():
         except Exception:
             session = None
 
+    if state['power'] > POWER_MAX:
+        abort(500)
+
     # copia del estado con ruido para que cada cliente vea valores ligeramente
     # distintos; esto no afecta al estado real
     session_state = {
@@ -204,6 +226,9 @@ def index():
         'dam_broken': state['dam_broken'],
         'water_temp': state['water_temp'] + random.uniform(-0.2,0.2),
         'turbine_temps': [t + random.uniform(-0.5,0.5) for t in state['turbine_temps']],
+        'turbine_rpm': [r + random.uniform(-5,5) for r in state['turbine_rpm']],
+        'turbine_broken': list(state['turbine_broken']),
+        'rpm_avg': sum(state['turbine_rpm'])/NUM_GATES + random.uniform(-5,5),
         'power': state['power'] + random.uniform(-0.2,0.2)
     }
 
@@ -216,7 +241,8 @@ def index():
         'wind_speed': [v + random.uniform(-0.5,0.5) for v in state['history']['wind_speed']],
         'water_temp': [v + random.uniform(-0.2,0.2) for v in state['history']['water_temp']],
         'turbine_temp': [v + random.uniform(-0.5,0.5) for v in state['history']['turbine_temp']],
-        'power': [v + random.uniform(-0.2,0.2) for v in state['history']['power']]
+        'power': [v + random.uniform(-0.2,0.2) for v in state['history']['power']],
+        'rpm': [v + random.uniform(-5,5) for v in state['history']['rpm']]
     }
 
     hist_json = json.dumps(hist_copy)
@@ -250,6 +276,11 @@ def gate(gid, action):
     if 0 <= gid < NUM_GATES:
         state['gates'][gid] = (action == 'open')
     return redirect('/')
+
+
+@app.errorhandler(500)
+def fail(e):
+    return "<h1>500 Internal Server Error</h1><p>flag{electric_power}</p>", 500
 
 
 if __name__ == '__main__':

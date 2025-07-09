@@ -57,7 +57,8 @@
       <p class="mb-1"><i class="bi bi-box"></i> Peso aprox: <strong>{{ "%.2f"|format(state['water_level']*1000) }} toneladas</strong></p>
       <p class="mb-1"><i class="bi bi-droplet-half"></i> Temp. agua: <strong>{{ "%.1f"|format(state['water_temp']) }} °C</strong></p>
       <p class="mb-1"><i class="bi bi-thermometer"></i> Temp. turbinas: <strong>{{ "%.1f"|format(state['turbine_temps'][0]) }} °C</strong></p>
-      <p class="mb-1"><i class="bi bi-lightning-fill"></i> Potencia: <strong>{{ "%.2f"|format(state['power']) }} MW</strong></p>
+      <p class="mb-1"><i class="bi bi-speedometer"></i> RPM promedio: <strong>{{ "%.0f"|format(state['rpm_avg']) }} rpm</strong></p>
+      <p class="mb-1"><i class="bi bi-lightning-fill"></i> Potencia total: <strong>{{ "%.2f"|format(state['power']) }} MW</strong></p>
       {% set weight = state['water_level']*1000 %}
       {% if weight >= WEIGHT_WARN or state['pressure'] >= PRESSURE_WARN %}
       <div class="alert alert-danger mt-2">⚠️ Riesgo crítico de colapso</div>
@@ -88,6 +89,9 @@
     <div class="col-md-4 text-center">
       <img src="https://dummyimage.com/200x120/333/fff&text=Turbina+{{g+1}}" class="img-fluid mb-1" alt="camara turbina {{g+1}}">
       <div><i class="bi bi-thermometer"></i> {{ "%.1f"|format(state['turbine_temps'][g]) }} °C</div>
+      <div><i class="bi bi-speedometer"></i> {{ "%.0f"|format(state['turbine_rpm'][g]) }} rpm</div>
+      <div><i class="bi bi-lightning-fill"></i> {{ "%.1f"|format(state['turbine_rpm'][g]*0.05) }} MW</div>
+      {% if state['turbine_broken'][g] %}<div class="text-danger">Turbina rota</div>{% endif %}
     </div>
     {% endfor %}
   </div>
@@ -128,6 +132,9 @@
     <div class="col-md-6">
       <canvas id="chartTurbineTemp" height="80"></canvas>
     </div>
+    <div class="col-md-6">
+      <canvas id="chartRPM" height="80"></canvas>
+    </div>
   </div>
   <script>
     const st = {{ state|tojson }};
@@ -161,7 +168,8 @@
         {label:'Nivel', data:hist.water_level, borderColor:'blue', fill:false},
         {label:'Presión', data:hist.pressure, borderColor:'red', fill:false},
         {label:'Caudal', data:hist.flow, borderColor:'green', fill:false},
-        {label:'Peso', data:weight, borderColor:'orange', fill:false}
+        {label:'Peso', data:weight, borderColor:'orange', fill:false},
+        {label:'RPM', data:hist.rpm, borderColor:'brown', fill:false}
       ]
     };
     new Chart(document.getElementById('chartGeneral'), {type:'line', data:dataGeneral});
@@ -220,6 +228,11 @@
     new Chart(document.getElementById('chartTurbineTemp'), {
       type:'line',
       data:{labels:labels, datasets:[{label:'Temp Turbina', data:hist.turbine_temp, borderColor:'magenta', fill:false}]}
+    });
+
+    new Chart(document.getElementById('chartRPM'), {
+      type:'line',
+      data:{labels:labels, datasets:[{label:'RPM', data:hist.rpm, borderColor:'brown', fill:false}]}
     });
     document.getElementById('cam-time').textContent = new Date().toLocaleTimeString();
     setTimeout(()=>location.reload(),3000);
