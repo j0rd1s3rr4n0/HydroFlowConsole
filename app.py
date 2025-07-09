@@ -1,10 +1,13 @@
-from flask import Flask, request, make_response, render_template
+from flask import Flask, request, make_response, render_template, redirect
 import base64
 import pickle
 import json
 import random
 
 app = Flask(__name__)
+
+# Simulated gate state stored globally for demo purposes
+GATE_STATE = "closed"
 
 # Simple role assignment based on username for demo purposes
 ROLE_MAP = {
@@ -50,6 +53,7 @@ def dashboard():
     sensors = {
         'water_level': f"{history['water_level'][-1]} m",
         'pressure': f"{history['pressure'][-1]} kPa",
+        "gate_state": GATE_STATE,
         'flow_rate': f"{history['flow_rate'][-1]} m3/s",
     }
 
@@ -58,8 +62,37 @@ def dashboard():
         user=user,
         role=role,
         sensors=sensors,
+        gate_state=GATE_STATE,
         history=json.dumps(history)
     )
 
+@app.route('/gate/<action>', methods=['POST'])
+def gate_control(action):
+    cookie = request.cookies.get('session')
+    if not cookie:
+        return "No session cookie found", 400
+    try:
+        data = pickle.loads(base64.b64decode(cookie))
+        role = data.get('role', 'viewer')
+    except Exception:
+        return "Invalid session cookie", 400
+
+    if role not in ['engineer', 'admin']:
+        return "Acceso denegado", 403
+
+    global GATE_STATE
+    if action == 'open':
+        GATE_STATE = 'open'
+    elif action == 'close':
+        GATE_STATE = 'closed'
+    else:
+        return "Accion invalida", 400
+
+    with open('gate_state.txt', 'w') as f:
+        f.write(GATE_STATE)
+
+    return redirect('/dashboard')
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
+

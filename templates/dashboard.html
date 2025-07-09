@@ -19,6 +19,7 @@
       <li>Nivel de agua actual: {{ sensors.water_level }}</li>
       <li>Presión actual: {{ sensors.pressure }}</li>
       <li>Flujo actual: {{ sensors.flow_rate }}</li>
+      <li>Estado de compuertas: {{ gate_state }}</li>
     </ul>
 
     <div class="charts">
@@ -35,8 +36,8 @@
 
     {% if role in ['engineer', 'admin'] %}
     <h2>Acciones</h2>
-    <button>Abrir compuertas</button>
-    <button>Cerrar compuertas</button>
+    <form action="/gate/open" method="post"><button type="submit">Abrir compuertas</button></form>
+    <form action="/gate/close" method="post"><button type="submit">Cerrar compuertas</button></form>
     {% else %}
     <p>No tienes permisos para controlar las compuertas.</p>
     {% endif %}
