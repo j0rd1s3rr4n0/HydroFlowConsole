@@ -9,8 +9,8 @@
   <style>
     body { background:#c3d9ff; font-family: Tahoma, sans-serif; }
     .card { box-shadow: 2px 2px 4px #888; }
-    #map { position:relative; width:700px; height:350px; margin:auto; border:2px solid #666; background:#222 url('https://dummyimage.com/700x350/aaaaaa/ffffff&text=Presa'); background-size:cover; color:#0f0; }
-    #gatecam { position:relative; width:500px; height:220px; margin:20px auto; border:2px solid #666; background:#000 url('https://dummyimage.com/500x220/444/fff&text=Compuertas'); background-size:cover; color:#0f0; }
+    #map { position:relative; width:100%; max-width:700px; height:40vh; margin:auto; border:2px solid #666; background:#222 url('https://dummyimage.com/700x350/aaaaaa/ffffff&text=Presa'); background-size:cover; color:#0f0; }
+    #gatecam { position:relative; width:100%; max-width:500px; height:220px; margin:20px auto; border:2px solid #666; background:#000 url('https://dummyimage.com/500x220/444/fff&text=Compuertas'); background-size:cover; color:#0f0; }
     #map::after { content:''; position:absolute; inset:0; border:1px solid rgba(255,255,255,0.2); pointer-events:none; }
     .cam-overlay { position:absolute; top:5px; left:5px; background:rgba(0,0,0,0.5); padding:2px 4px; font-size:12px; font-family:monospace; }
     #dam { position:absolute; bottom:100px; left:250px; width:100px; height:100px; background:#555; opacity:0.8; }
@@ -47,32 +47,38 @@
   {% else %}
   <p><a href="/login/visitante">Iniciar sesión de prueba</a></p>
   {% endif %}
-  <div class="card mb-3 w-75 mx-auto" style="background:#c0d8ff; border-color:#7aa3d0;">
-    <div class="card-body">
-      <h5 class="card-title">Estado meteorológico</h5>
-      <p class="card-text">
-        <i class="bi" id="weather-icon"></i>
-        <span id="weather">{{ state['weather'] }}</span> -
-        <i class="bi bi-thermometer-half"></i> {{ "%.1f"|format(state['temperature']) }} °C -
-        <i class="bi bi-wind"></i> {{ "%.1f"|format(state['wind_speed']) }} km/h
-      </p>
+  <div class="row mb-3 gx-3">
+    <div class="col-lg-6">
+      <div class="card h-100" style="background:#c0d8ff; border-color:#7aa3d0;">
+        <div class="card-body">
+          <h5 class="card-title">Estado meteorológico</h5>
+          <p class="card-text">
+            <i class="bi" id="weather-icon"></i>
+            <span id="weather">{{ state['weather'] }}</span> -
+            <i class="bi bi-thermometer-half"></i> {{ "%.1f"|format(state['temperature']) }} °C -
+            <i class="bi bi-wind"></i> {{ "%.1f"|format(state['wind_speed']) }} km/h
+          </p>
+        </div>
+      </div>
     </div>
-  </div>
-  <div class="card mb-3 w-75 mx-auto">
-    <div class="card-body">
-      <h5 class="card-title"><i class="bi bi-speedometer2"></i> Lecturas actuales</h5>
-      <p class="mb-1"><i class="bi bi-water"></i> Nivel: <strong id="lvl">{{ "%.2f"|format(state['water_level']) }}</strong> m</p>
-      <p class="mb-1"><i class="bi bi-speedometer"></i> Presión: <strong id="press">{{ "%.2f"|format(state['pressure']) }}</strong> bar</p>
-      <p class="mb-1"><i class="bi bi-tropical-storm"></i> Caudal: <strong id="flow">{{ "%.2f"|format(state['flow']) }}</strong> m³/s</p>
-      <p class="mb-1"><i class="bi bi-box"></i> Peso aprox: <strong id="weight">{{ "%.2f"|format(state['water_level']*1000) }}</strong> t</p>
-      <p class="mb-1"><i class="bi bi-droplet-half"></i> Temp. agua: <strong id="wtemp">{{ "%.1f"|format(state['water_temp']) }}</strong> °C</p>
-      <p class="mb-1"><i class="bi bi-thermometer"></i> Temp. turbinas: <strong id="ttemp">{{ "%.1f"|format(state['turbine_temps'][0]) }}</strong> °C</p>
-      <p class="mb-1"><i class="bi bi-speedometer"></i> RPM promedio: <strong id="rpm">{{ "%.0f"|format(state['rpm_avg']) }}</strong> rpm</p>
-      <p class="mb-1"><i class="bi bi-lightning-fill"></i> Potencia total: <strong id="power">{{ "%.2f"|format(state['power']) }}</strong> MW</p>
-      {% set weight = state['water_level']*1000 %}
-      {% if weight >= WEIGHT_WARN or state['pressure'] >= PRESSURE_WARN %}
-      <div class="alert alert-danger mt-2">⚠️ Riesgo crítico de colapso</div>
-      {% endif %}
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-body">
+          <h5 class="card-title"><i class="bi bi-speedometer2"></i> Lecturas actuales</h5>
+          <p class="mb-1"><i class="bi bi-water"></i> Nivel: <strong id="lvl">{{ "%.2f"|format(state['water_level']) }}</strong> m</p>
+          <p class="mb-1"><i class="bi bi-speedometer"></i> Presión: <strong id="press">{{ "%.2f"|format(state['pressure']) }}</strong> bar</p>
+          <p class="mb-1"><i class="bi bi-tropical-storm"></i> Caudal: <strong id="flow">{{ "%.2f"|format(state['flow']) }}</strong> m³/s</p>
+          <p class="mb-1"><i class="bi bi-box"></i> Peso aprox: <strong id="weight">{{ "%.2f"|format(state['water_level']*1000) }}</strong> t</p>
+          <p class="mb-1"><i class="bi bi-droplet-half"></i> Temp. agua: <strong id="wtemp">{{ "%.1f"|format(state['water_temp']) }}</strong> °C</p>
+          <p class="mb-1"><i class="bi bi-thermometer"></i> Temp. turbinas: <strong id="ttemp">{{ "%.1f"|format(state['turbine_temps'][0]) }}</strong> °C</p>
+          <p class="mb-1"><i class="bi bi-speedometer"></i> RPM promedio: <strong id="rpm">{{ "%.0f"|format(state['rpm_avg']) }}</strong> rpm</p>
+          <p class="mb-1"><i class="bi bi-lightning-fill"></i> Potencia total: <strong id="power">{{ "%.2f"|format(state['power']) }}</strong> MW</p>
+          {% set weight = state['water_level']*1000 %}
+          {% if weight >= WEIGHT_WARN or state['pressure'] >= PRESSURE_WARN %}
+          <div class="alert alert-danger mt-2">⚠️ Riesgo crítico de colapso</div>
+          {% endif %}
+        </div>
+      </div>
     </div>
   </div>
   <div id="map" class="mb-3">

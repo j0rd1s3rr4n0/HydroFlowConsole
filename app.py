@@ -234,9 +234,10 @@ def index():
         'dam_broken': state['dam_broken'],
         'water_temp': state['water_temp'] + random.uniform(-0.2,0.2),
         'turbine_temps': [t + random.uniform(-0.5,0.5) for t in state['turbine_temps']],
-        'turbine_rpm': [r + random.uniform(-5,5) for r in state['turbine_rpm']],
+        # añadimos algo de ruido pero si la turbina esta parada no debe moverse
+        'turbine_rpm': [max(0.0, (r + random.uniform(-5,5)) if r > 0 else 0.0) for r in state['turbine_rpm']],
         'turbine_broken': list(state['turbine_broken']),
-        'rpm_avg': sum(state['turbine_rpm'])/NUM_GATES + random.uniform(-5,5),
+        'rpm_avg': max(0.0, sum(state['turbine_rpm'])/NUM_GATES + (random.uniform(-5,5) if any(state['turbine_rpm']) else 0)),
         'power': state['power'] + random.uniform(-0.2,0.2)
     }
 
@@ -304,9 +305,9 @@ def api_state():
         'dam_broken': state['dam_broken'],
         'water_temp': state['water_temp'] + random.uniform(-0.2, 0.2),
         'turbine_temps': [t + random.uniform(-0.5, 0.5) for t in state['turbine_temps']],
-        'turbine_rpm': [r + random.uniform(-5, 5) for r in state['turbine_rpm']],
+        'turbine_rpm': [max(0.0, (r + random.uniform(-5, 5)) if r > 0 else 0.0) for r in state['turbine_rpm']],
         'turbine_broken': list(state['turbine_broken']),
-        'rpm_avg': sum(state['turbine_rpm']) / NUM_GATES + random.uniform(-5, 5),
+        'rpm_avg': max(0.0, sum(state['turbine_rpm']) / NUM_GATES + (random.uniform(-5, 5) if any(state['turbine_rpm']) else 0)),
         'power': state['power'] + random.uniform(-0.2, 0.2)
     }
 
