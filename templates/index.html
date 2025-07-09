@@ -5,18 +5,70 @@
   <title>HydroConsole</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { background:linear-gradient(#c5def8,#e8f0ff); font-family: "Segoe UI", Tahoma, sans-serif; }
-    .card { box-shadow: 0 2px 6px rgba(0,0,0,0.2); border-radius:8px; }
-    #map { position:relative; width:100%; max-width:700px; height:40vh; margin:auto; border:2px solid #666; background:#222 url('https://dummyimage.com/700x350/777/fff&text=Presa'); background-size:cover; color:#0f0; }
-    #gatecam { position:relative; width:100%; max-width:500px; height:220px; margin:20px auto; border:2px solid #666; background:#000 url('https://dummyimage.com/500x220/555/fff&text=Compuertas'); background-size:cover; color:#0f0; }
+    body {
+      background: linear-gradient(180deg,#101820,#202b38);
+      color: #f0f3f5;
+      font-family: 'Inter', sans-serif;
+    }
+    .card {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(4px);
+    }
+    #map {
+      position: relative;
+      width: 100%;
+      max-width: 700px;
+      height: 40vh;
+      margin: auto;
+      border: 2px solid #444;
+      background: #222 url('https://dummyimage.com/700x350/555/fff&text=Presa') no-repeat center/cover;
+      color: #0f0;
+    }
+    #gatecam {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      height: 220px;
+      margin: 20px auto;
+      border: 2px solid #444;
+      background: #000 url('https://dummyimage.com/500x220/333/fff&text=Compuertas') no-repeat center/cover;
+      color: #0f0;
+    }
     #map::after { content:''; position:absolute; inset:0; border:1px solid rgba(255,255,255,0.2); pointer-events:none; }
-    .cam-overlay { position:absolute; top:5px; left:5px; background:rgba(0,0,0,0.5); padding:2px 4px; font-size:12px; font-family:monospace; }
+    .cam-overlay {
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      background: rgba(0,0,0,0.55);
+      padding: 2px 6px;
+      font-size: 12px;
+      font-family: monospace;
+      border-radius: 4px;
+    }
     #dam { position:absolute; bottom:100px; left:250px; width:100px; height:100px; background:#555; opacity:0.8; }
     #dam2 { position:absolute; bottom:40px; left:180px; width:140px; height:140px; background:#555; opacity:0.8; }
-    .gate { position:absolute; bottom:0; width:15px; height:40px; background:#333; opacity:0.9; }
-    .gate2 { position:absolute; bottom:0; width:20px; height:60px; background:#333; opacity:0.9; }
+    .gate {
+      position: absolute;
+      bottom: 0;
+      width: 15px;
+      height: 40px;
+      background: #2c2c2c;
+      opacity: 0.9;
+    }
+    .gate2 {
+      position: absolute;
+      bottom: 0;
+      width: 20px;
+      height: 60px;
+      background: #2c2c2c;
+      opacity: 0.9;
+    }
     #gate0 { left:5px; }
     #gate1 { left:25px; }
     #gate2 { left:45px; }
@@ -29,21 +81,29 @@
     #gate2_4 { left:130px; }
     .flow { position:absolute; bottom:-20px; width:15px; height:20px; background:rgba(0, 170, 255, 0.6); display:none; }
     .flow2 { position:absolute; bottom:-30px; width:20px; height:30px; background:rgba(0,170,255,0.6); display:none; }
-    #water { position:absolute; bottom:0; left:0; width:100%; background:rgba(0,0,255,0.4); }
-    #water2 { position:absolute; bottom:0; left:0; width:100%; background:rgba(0,0,255,0.4); }
-    #city { position:absolute; bottom:0; left:0; width:100%; height:100px; background:#777; opacity:0.9; }
-    .house { position:absolute; bottom:10px; width:20px; height:20px; background:#eee; border:1px solid #333; }
-    #flood { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,255,0.3); display:none; }
+    #water { position:absolute; bottom:0; left:0; width:100%; background:rgba(0,120,255,0.35); }
+    #water2 { position:absolute; bottom:0; left:0; width:100%; background:rgba(0,120,255,0.35); }
+    #city { position:absolute; bottom:0; left:0; width:100%; height:100px; background:#555; opacity:0.9; }
+    .house { position:absolute; bottom:10px; width:20px; height:20px; background:#eaeaea; border:1px solid #222; }
+    #flood { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,120,255,0.3); display:none; }
     .cam-cross { position:absolute; top:0; left:0; right:0; bottom:0; pointer-events:none; }
-    .cam-cross::before, .cam-cross::after { content:''; position:absolute; background:rgba(255,255,255,0.3); }
+    .cam-cross::before, .cam-cross::after { content:''; position:absolute; background:rgba(255,255,255,0.25); }
     .cam-cross::before { top:50%; left:0; right:0; height:1px; }
     .cam-cross::after { left:50%; top:0; bottom:0; width:1px; }
-    .camera-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:15px; }
-    .camera-grid img { width:100%; border:2px solid #666; }
+    .camera-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px;
+    }
+    .camera-grid img {
+      width: 100%;
+      border: 2px solid #444;
+      border-radius: 6px;
+    }
   </style>
 </head>
 <body class="container-fluid py-3">
-  <h1 class="mb-3">Centro de Control - Presa de Tramuntana</h1>
+  <h1 class="mb-4 fw-semibold text-center" style="letter-spacing:1px;">Centro de Control - Presa de Tramuntana</h1>
   {% if session %}
   <p>Bienvenido {{ session['user'] }} ({{ session['role'] }}) - <a href="/logout">Salir</a></p>
   {% else %}
@@ -51,7 +111,7 @@
   {% endif %}
   <div class="row mb-3 gx-3">
     <div class="col-lg-6">
-      <div class="card h-100" style="background:#c0d8ff; border-color:#7aa3d0;">
+      <div class="card h-100 text-light" style="background:rgba(90,140,255,0.2); border-color:#5dafff;">
         <div class="card-body">
           <h5 class="card-title">Estado meteorológico</h5>
           <p class="card-text">
@@ -64,7 +124,7 @@
       </div>
     </div>
     <div class="col-lg-6">
-      <div class="card h-100">
+      <div class="card h-100 text-light" style="background:rgba(255,255,255,0.06);">
         <div class="card-body">
           <h5 class="card-title"><i class="bi bi-speedometer2"></i> Lecturas actuales</h5>
           <p class="mb-1"><i class="bi bi-water"></i> Nivel: <strong id="lvl">{{ "%.2f"|format(state['water_level']) }}</strong> m</p>

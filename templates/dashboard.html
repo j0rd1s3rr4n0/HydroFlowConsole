@@ -5,20 +5,36 @@
   <title>HydroConsole Dashboard</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background: linear-gradient(180deg,#101820,#202b38);
+      color: #f0f3f5;
+      font-family: 'Inter', sans-serif;
+    }
+    .card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      backdrop-filter: blur(4px);
+    }
+  </style>
 </head>
 <body class="container-fluid py-4">
-  <h1>Presa de Tramuntana</h1>
-  <p>Bienvenido {{ user }} ({{ role }})</p>
-  <p>Clima actual: <strong>{{ state['weather'] }}</strong></p>
-  <ul>
-    <li><i class="bi bi-water"></i> Nivel de agua: {{ "%.2f"|format(state['water_level']) }} m</li>
-    <li><i class="bi bi-speedometer"></i> Presión: {{ "%.2f"|format(state['pressure']) }} bar</li>
-    <li><i class="bi bi-tropical-storm"></i> Caudal de salida: {{ "%.2f"|format(state['flow']) }} m³/s</li>
-    <li><i class="bi bi-box"></i> Peso aprox.: {{ "%.2f"|format(state['water_level']*1000) }} t</li>
-    <li><i class="bi bi-speedometer"></i> RPM promedio: {{ "%.0f"|format(state['rpm_avg']) }}</li>
-    <li><i class="bi bi-lightning-fill"></i> Potencia total: {{ "%.2f"|format(state['power']) }} MW</li>
-  </ul>
+  <h1 class="text-center fw-semibold mb-4">Presa de Tramuntana</h1>
+  <p class="text-center">Bienvenido {{ user }} ({{ role }})</p>
+  <p class="text-center">Clima actual: <strong>{{ state['weather'] }}</strong></p>
+  <div class="card mb-3 p-3">
+    <ul class="mb-0">
+      <li><i class="bi bi-water"></i> Nivel de agua: {{ "%.2f"|format(state['water_level']) }} m</li>
+      <li><i class="bi bi-speedometer"></i> Presión: {{ "%.2f"|format(state['pressure']) }} bar</li>
+      <li><i class="bi bi-tropical-storm"></i> Caudal de salida: {{ "%.2f"|format(state['flow']) }} m³/s</li>
+      <li><i class="bi bi-box"></i> Peso aprox.: {{ "%.2f"|format(state['water_level']*1000) }} t</li>
+      <li><i class="bi bi-speedometer"></i> RPM promedio: {{ "%.0f"|format(state['rpm_avg']) }}</li>
+      <li><i class="bi bi-lightning-fill"></i> Potencia total: {{ "%.2f"|format(state['power']) }} MW</li>
+    </ul>
+  </div>
   {% if state['water_level'] > 250 or state['pressure'] > 280 %}
   <div class="alert alert-danger">⚠️ Riesgo crítico de colapso</div>
   {% endif %}
@@ -27,7 +43,8 @@
   {% endif %}
 
   <h2>Compuertas</h2>
-  <ul>
+  <div class="card p-3 mb-3">
+  <ul class="mb-0">
   {% for g in range(state['gates']|length) %}
     <li>Puerta {{ g+1 }}: {{ 'abierta' if state['gates'][g] else 'cerrada' }}
     {% if role in ['engineer','admin'] %}
@@ -41,9 +58,12 @@
     </li>
   {% endfor %}
   </ul>
+  </div>
 
   <h2>Historial de Lecturas</h2>
-  <canvas id="chart" height="100"></canvas>
+  <div class="card p-3 mb-3">
+    <canvas id="chart" height="100"></canvas>
+  </div>
 
   <script>
     const history = {{ history_json|safe }};
