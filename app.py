@@ -64,6 +64,15 @@ state = {
 
 UPDATE_INTERVAL = 3  # segundos
 
+def _recalc_flow_power():
+    """Recalculate flow and power based on open gates immediately."""
+    open_count = sum(state['gates'])
+    if state['dam_broken']:
+        state['flow'] = 5.0
+    else:
+        state['flow'] = open_count * 1.0
+    state['power'] = WATER_DENSITY * GRAVITY * state['flow'] * state['water_level'] / 1_000_000
+
 def update_state():
     """Actualiza la simulación de la presa cada pocos segundos"""
     while True:
@@ -312,6 +321,7 @@ def gate(gid, action):
 
     if 0 <= gid < NUM_GATES:
         state['gates'][gid] = (action == 'open')
+        _recalc_flow_power()
     return redirect('/')
 
 
@@ -330,6 +340,7 @@ def gates_all(action):
         return 'Acceso denegado', 403
 
     state['gates'] = [action == 'open'] * NUM_GATES
+    _recalc_flow_power()
     return redirect('/')
 
 
