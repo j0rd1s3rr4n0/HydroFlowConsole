@@ -55,6 +55,9 @@
       <p class="mb-1"><i class="bi bi-speedometer"></i> Presión: <strong>{{ "%.2f"|format(state['pressure']) }} bar</strong></p>
       <p class="mb-1"><i class="bi bi-tropical-storm"></i> Caudal: <strong>{{ "%.2f"|format(state['flow']) }} m³/s</strong></p>
       <p class="mb-1"><i class="bi bi-box"></i> Peso aprox: <strong>{{ "%.2f"|format(state['water_level']*1000) }} toneladas</strong></p>
+      <p class="mb-1"><i class="bi bi-droplet-half"></i> Temp. agua: <strong>{{ "%.1f"|format(state['water_temp']) }} °C</strong></p>
+      <p class="mb-1"><i class="bi bi-thermometer"></i> Temp. turbinas: <strong>{{ "%.1f"|format(state['turbine_temps'][0]) }} °C</strong></p>
+      <p class="mb-1"><i class="bi bi-lightning-fill"></i> Potencia: <strong>{{ "%.2f"|format(state['power']) }} MW</strong></p>
       {% set weight = state['water_level']*1000 %}
       {% if weight >= WEIGHT_WARN or state['pressure'] >= PRESSURE_WARN %}
       <div class="alert alert-danger mt-2">⚠️ Riesgo crítico de colapso</div>
@@ -75,9 +78,18 @@
       <div id="flow{{g}}" class="flow" style="left:{{5+20*g}}px"></div>
       {% endfor %}
     </div>
-    <div id="water"></div>
-    <div id="flood"></div>
-    <div class="cam-cross"></div>
+  <div id="water"></div>
+  <div id="flood"></div>
+  <div class="cam-cross"></div>
+  </div>
+
+  <div class="row my-3">
+    {% for g in range(state['gates']|length) %}
+    <div class="col-md-4 text-center">
+      <img src="https://dummyimage.com/200x120/333/fff&text=Turbina+{{g+1}}" class="img-fluid mb-1" alt="camara turbina {{g+1}}">
+      <div><i class="bi bi-thermometer"></i> {{ "%.1f"|format(state['turbine_temps'][g]) }} °C</div>
+    </div>
+    {% endfor %}
   </div>
   {% if session and session['role'] in ['engineer','admin'] %}
   <div class="mb-4">
@@ -106,6 +118,15 @@
     </div>
     <div class="col-md-6">
       <canvas id="chartWeight" height="80"></canvas>
+    </div>
+    <div class="col-md-6">
+      <canvas id="chartPower" height="80"></canvas>
+    </div>
+    <div class="col-md-6">
+      <canvas id="chartWaterTemp" height="80"></canvas>
+    </div>
+    <div class="col-md-6">
+      <canvas id="chartTurbineTemp" height="80"></canvas>
     </div>
   </div>
   <script>
@@ -184,6 +205,21 @@
           {label:'Máximo', data:maxWeight, borderColor:'red', borderDash:[5,5], fill:false}
         ]
       }
+    });
+
+    new Chart(document.getElementById('chartPower'), {
+      type:'line',
+      data:{labels:labels, datasets:[{label:'Potencia', data:hist.power, borderColor:'purple', fill:false}]}
+    });
+
+    new Chart(document.getElementById('chartWaterTemp'), {
+      type:'line',
+      data:{labels:labels, datasets:[{label:'Temp Agua', data:hist.water_temp, borderColor:'cyan', fill:false}]}
+    });
+
+    new Chart(document.getElementById('chartTurbineTemp'), {
+      type:'line',
+      data:{labels:labels, datasets:[{label:'Temp Turbina', data:hist.turbine_temp, borderColor:'magenta', fill:false}]}
     });
     document.getElementById('cam-time').textContent = new Date().toLocaleTimeString();
     setTimeout(()=>location.reload(),3000);

@@ -25,6 +25,9 @@ state = {
     'weather': 'soleado',
     'temperature': 20.0,      # grados C
     'wind_speed': 5.0,        # km/h (simple aproximacion)
+    'water_temp': 15.0,       # temperatura del agua
+    'turbine_temps': [20.0] * NUM_GATES,
+    'power': 0.0,             # produccion electrica en MW
     'rain_timer': 0,
     'dam_broken': False,
     'overflow_start': None,
@@ -34,7 +37,10 @@ state = {
         'pressure': [],
         'flow': [],
         'temperature': [],
-        'wind_speed': []
+        'wind_speed': [],
+        'water_temp': [],
+        'turbine_temp': [],
+        'power': []
     }
 }
 
@@ -73,14 +79,27 @@ def update_state():
         state['temperature'] = max(5, min(state['temperature'], 35))
         state['wind_speed'] = max(0, min(state['wind_speed'], 40))
 
+        # temperatura del agua se ajusta lentamente hacia la ambiental
+        state['water_temp'] += (state['temperature'] - state['water_temp']) * 0.05
+        state['water_temp'] += random.uniform(-0.1, 0.1)
+        state['water_temp'] = max(4, min(state['water_temp'], 30))
+
+        # actualiza temperatura de cada turbina dependiendo de si hay flujo
+        for i, open_ in enumerate(state['gates']):
+            if open_ and not state['dam_broken']:
+                # la turbina se calienta ligeramente cuando produce energia
+                state['turbine_temps'][i] += 0.3
+            else:
+                # se enfria hacia la temperatura del agua
+                state['turbine_temps'][i] += (state['water_temp'] - state['turbine_temps'][i]) * 0.1
+            state['turbine_temps'][i] = max(state['water_temp'], min(state['turbine_temps'][i], 90))
+
         if state['dam_broken']:
-            # tras la rotura, el agua sale sin control
+            # tras la rotura, el agua sale sin control pero sin generacion
             state['flow'] = 5.0
             state['water_level'] = max(state['water_level'] - state['flow'], 0)
-            # presion aproximada en bar (escala simplificada)
             state['pressure'] = state['water_level'] * 1.12
-            if state['pressure'] >= 280 or state['water_level'] > MAX_LEVEL:
-                state['dam_broken'] = True
+            state['power'] = 0.0
         else:
             base_inflow = 0.2
             if state['weather'] == 'lluvia':
@@ -95,6 +114,7 @@ def update_state():
             state['water_level'] = max(state['water_level'], 0)
             state['flow'] = outflow
             state['pressure'] = state['water_level'] * 1.12
+            state['power'] = outflow * 2.5  # produccion ficticia
             if state['pressure'] >= 280:
                 state['dam_broken'] = True
 
@@ -116,6 +136,11 @@ def update_state():
         state['history']['flow'].append(state['flow'])
         state['history']['temperature'].append(state['temperature'])
         state['history']['wind_speed'].append(state['wind_speed'])
+        state['history']['water_temp'].append(state['water_temp'])
+        # para graficar se usa la temperatura media de las turbinas
+        avg_turb = sum(state['turbine_temps'])/NUM_GATES
+        state['history']['turbine_temp'].append(avg_turb)
+        state['history']['power'].append(state['power'])
         if len(state['history']['time']) > 50:
             for k in state['history']:
                 state['history'][k].pop(0)
@@ -176,7 +201,10 @@ def index():
         'weather': state['weather'],
         'temperature': state['temperature'] + random.uniform(-0.5,0.5),
         'wind_speed': state['wind_speed'] + random.uniform(-0.5,0.5),
-        'dam_broken': state['dam_broken']
+        'dam_broken': state['dam_broken'],
+        'water_temp': state['water_temp'] + random.uniform(-0.2,0.2),
+        'turbine_temps': [t + random.uniform(-0.5,0.5) for t in state['turbine_temps']],
+        'power': state['power'] + random.uniform(-0.2,0.2)
     }
 
     hist_copy = {
@@ -185,7 +213,10 @@ def index():
         'pressure': [v + random.uniform(-0.5, 0.5) for v in state['history']['pressure']],
         'flow': [v + random.uniform(-0.2, 0.2) for v in state['history']['flow']],
         'temperature': [v + random.uniform(-0.5,0.5) for v in state['history']['temperature']],
-        'wind_speed': [v + random.uniform(-0.5,0.5) for v in state['history']['wind_speed']]
+        'wind_speed': [v + random.uniform(-0.5,0.5) for v in state['history']['wind_speed']],
+        'water_temp': [v + random.uniform(-0.2,0.2) for v in state['history']['water_temp']],
+        'turbine_temp': [v + random.uniform(-0.5,0.5) for v in state['history']['turbine_temp']],
+        'power': [v + random.uniform(-0.2,0.2) for v in state['history']['power']]
     }
 
     hist_json = json.dumps(hist_copy)
