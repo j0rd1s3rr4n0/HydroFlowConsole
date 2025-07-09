@@ -153,10 +153,13 @@
           <p class="mb-1"><i class="bi bi-thermometer"></i> Temp. turbinas: <strong id="ttemp">{{ "%.1f"|format(state['turbine_temps'][0]) }}</strong> °C</p>
           <p class="mb-1"><i class="bi bi-speedometer"></i> RPM promedio: <strong id="rpm">{{ "%.0f"|format(state['rpm_avg']) }}</strong> rpm</p>
           <p class="mb-1"><i class="bi bi-lightning-fill"></i> Potencia total: <strong id="power">{{ "%.2f"|format(state['power']) }}</strong> MW</p>
-          {% set weight = state['water_weight'] %}
-          {% if weight >= WEIGHT_WARN or state['pressure'] >= PRESSURE_WARN %}
-          <div class="alert alert-danger mt-2">⚠️ Riesgo crítico de colapso</div>
+          <div id="alert-area">
+          {% if alert_level == 'critical' %}
+            <div class="alert alert-danger mt-2">⚠️ Riesgo crítico de colapso: {{ alert_params|join(', ') }}</div>
+          {% elif alert_level == 'warning' %}
+            <div class="alert alert-warning mt-2">⚠️ Aviso: {{ alert_params|join(', ') }}</div>
           {% endif %}
+          </div>
         </div>
       </div>
     </div>
@@ -478,13 +481,31 @@
       document.getElementById('cam-time').textContent = new Date().toLocaleTimeString();
     }
 
+    function updateAlert(level, params){
+      const area = document.getElementById('alert-area');
+      if(!area) return;
+      area.innerHTML = '';
+      if(level === 'critical'){
+        const div = document.createElement('div');
+        div.className = 'alert alert-danger mt-2';
+        div.textContent = '⚠️ Riesgo crítico de colapso: ' + params.join(', ');
+        area.appendChild(div);
+      }else if(level === 'warning'){
+        const div = document.createElement('div');
+        div.className = 'alert alert-warning mt-2';
+        div.textContent = '⚠️ Aviso: ' + params.join(', ');
+        area.appendChild(div);
+      }
+    }
+
     function apply(data){
       applyState(data.state);
       updateCharts(data.history);
+      updateAlert(data.alert_level, data.alert_params);
     }
 
     createCharts(initialHist);
-    apply({state: initialState, history: initialHist});
+    apply({state: initialState, history: initialHist, alert_level: '{{ alert_level }}', alert_params: {{ alert_params|tojson }} });
 
     async function refresh(){
       const r = await fetch('/state');

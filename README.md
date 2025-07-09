@@ -26,7 +26,7 @@ El peso del agua se calcula a partir del volumen almacenado mediante **P = V × 
 donde `γ` es el peso específico del agua (aprox. 9810 N/m³). Para simplificar,
 asumimos un área de 1000 m² por metro de altura, por lo que 1 m de nivel
 equivale a unas 1000 toneladas de masa de agua.
-Cuando el nivel supera los 250 m o la presión pasa de 280 bar aparece un aviso de peligro y la presa puede romperse e inundar la ciudad.
+ Cuando el nivel supera los 250 m o la presión pasa de 280 bar aparece un aviso de peligro. El panel indica exactamente qué parámetros están fuera de rango y muestra "⚠️ Aviso" si son valores de advertencia y "⚠️ Riesgo crítico de colapso" cuando rebasan el límite máximo.
 
  Tambien se registran la temperatura del agua y de cada turbina, la velocidad de rotacion (rpm) y la energia generada por la central hidroelectrica. Cada puerta dispone de una turbina asociada. Puedes abrir o cerrar compuertas individualmente o con los botones "Abrir todas" y "Cerrar todas".
 

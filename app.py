@@ -73,6 +73,31 @@ def _recalc_flow_power():
         state['flow'] = open_count * 1.0
     state['power'] = WATER_DENSITY * GRAVITY * state['flow'] * state['water_level'] / 1_000_000
 
+def calc_alert():
+    """Return alert level and parameters that exceed thresholds."""
+    warn = []
+    crit = []
+    if state['water_level'] >= MAX_LEVEL:
+        crit.append(f"nivel {state['water_level']:.1f} m >= {MAX_LEVEL}")
+    elif state['water_level'] >= MAX_LEVEL * 0.95:
+        warn.append(f"nivel {state['water_level']:.1f} m")
+
+    if state['pressure'] >= PRESSURE_MAX:
+        crit.append(f"presi\u00f3n {state['pressure']:.1f} bar >= {PRESSURE_MAX}")
+    elif state['pressure'] >= PRESSURE_WARN:
+        warn.append(f"presi\u00f3n {state['pressure']:.1f} bar")
+
+    if state['water_weight'] >= WEIGHT_MAX:
+        crit.append(f"peso {state['water_weight']:.0f} t >= {WEIGHT_MAX}")
+    elif state['water_weight'] >= WEIGHT_WARN:
+        warn.append(f"peso {state['water_weight']:.0f} t")
+
+    if crit:
+        return 'critical', crit
+    elif warn:
+        return 'warning', warn
+    return None, []
+
 def update_state():
     """Actualiza la simulación de la presa cada pocos segundos"""
     while True:
@@ -292,11 +317,13 @@ def index():
     }
 
     hist_json = json.dumps(hist_copy)
+    level, params = calc_alert()
     return render_template(
         'dashboard.html', session=session, state=session_state,
         history_json=hist_json, MAX_LEVEL=MAX_LEVEL,
         WEIGHT_WARN=WEIGHT_WARN, WEIGHT_MAX=WEIGHT_MAX,
-        PRESSURE_WARN=PRESSURE_WARN, PRESSURE_MAX=PRESSURE_MAX
+        PRESSURE_WARN=PRESSURE_WARN, PRESSURE_MAX=PRESSURE_MAX,
+        alert_level=level, alert_params=params
     )
 
 # --- interfaz principal ---
@@ -386,6 +413,7 @@ def api_state():
         'power': [v + (random.uniform(-0.2, 0.2) if v > 0 else 0.0) for v in state['history']['power']],
         'rpm': [max(0.0, v + (random.uniform(-5, 5) if v > 0 else 0.0)) for v in state['history']['rpm']]
     }
+    level, params = calc_alert()
     return {
         'state': session_state,
         'history': hist_copy,
@@ -396,7 +424,9 @@ def api_state():
         'PRESSURE_MAX': PRESSURE_MAX,
         'water_weight': session_state['water_weight'],
         'water_volume': session_state['water_volume'],
-        'water_liters': session_state['water_liters']
+        'water_liters': session_state['water_liters'],
+        'alert_level': level,
+        'alert_params': params
     }
 
 
