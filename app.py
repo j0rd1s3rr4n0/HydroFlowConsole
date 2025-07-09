@@ -21,7 +21,10 @@ def login(user):
     session_data = {'user': user, 'role': role}
     serialized = pickle.dumps(session_data)
     encoded = base64.b64encode(serialized).decode('utf-8')
-    resp = make_response(f"Logged in as {user} with role {role}. Go to /dashboard")
+    # Store the session info in an unsigned cookie for testing (insecure)
+    resp = make_response(
+        f"Logged in as {user} with role {role}. Go to /dashboard"
+    )
     resp.set_cookie('session', encoded)
     return resp
 
