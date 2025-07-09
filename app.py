@@ -17,6 +17,9 @@ WEIGHT_WARN = 60000.0
 WEIGHT_MAX = 80000.0
 PRESSURE_WARN = WEIGHT_WARN / 1000 * 1.12  # bar equivalentes
 PRESSURE_MAX = WEIGHT_MAX / 1000 * 1.12
+DAM_AREA = 1000.0  # m^2 estimados del vaso
+WATER_DENSITY = 1000.0  # kg/m^3
+GRAVITY = 9.81  # m/s^2
 RPM_MIN = 2000.0
 RPM_WARN = 4500.0
 RPM_MAX = 5000.0
@@ -34,6 +37,7 @@ state = {
     'turbine_rpm': [0.0] * NUM_GATES,
     'turbine_broken': [False] * NUM_GATES,
     'power': 0.0,             # produccion electrica en MW
+    'water_weight': 0.0,      # peso total del agua en toneladas
     'rain_timer': 0,
     'dam_broken': False,
     'overflow_start': None,
@@ -47,7 +51,8 @@ state = {
         'water_temp': [],
         'turbine_temp': [],
         'power': [],
-        'rpm': []
+        'rpm': [],
+        'water_weight': []
     }
 }
 
@@ -122,6 +127,9 @@ def update_state():
             state['flow'] = 5.0
             state['water_level'] = max(state['water_level'] - state['flow'], 0)
             state['pressure'] = state['water_level'] * 1.12
+            volume = state['water_level'] * DAM_AREA
+            mass = volume * WATER_DENSITY
+            state['water_weight'] = mass / 1000
             state['power'] = 0.0
         else:
             base_inflow = 0.2
@@ -137,8 +145,12 @@ def update_state():
             state['water_level'] = max(state['water_level'], 0)
             state['flow'] = outflow
             state['pressure'] = state['water_level'] * 1.12
+            # peso del agua segun el volumen embalsado
+            volume = state['water_level'] * DAM_AREA
+            mass = volume * WATER_DENSITY
+            state['water_weight'] = mass / 1000  # toneladas
             # potencia total segun formula P = rho*g*Q*H (en MW)
-            state['power'] = 1000 * 9.81 * state['flow'] * state['water_level'] / 1_000_000
+            state['power'] = WATER_DENSITY * GRAVITY * state['flow'] * state['water_level'] / 1_000_000
             if state['pressure'] >= 280:
                 state['dam_broken'] = True
 
@@ -161,6 +173,7 @@ def update_state():
         state['history']['temperature'].append(state['temperature'])
         state['history']['wind_speed'].append(state['wind_speed'])
         state['history']['water_temp'].append(state['water_temp'])
+        state['history']['water_weight'].append(state['water_weight'])
         # para graficar se usa la temperatura media de las turbinas
         avg_turb = sum(state['turbine_temps'])/NUM_GATES
         state['history']['turbine_temp'].append(avg_turb)
@@ -232,6 +245,7 @@ def index():
         'wind_speed': state['wind_speed'] + random.uniform(-0.5,0.5),
         'dam_broken': state['dam_broken'],
         'water_temp': state['water_temp'] + random.uniform(-0.2,0.2),
+        'water_weight': state['water_weight'] + random.uniform(-50,50),
         'turbine_temps': [t + random.uniform(-0.5,0.5) for t in state['turbine_temps']],
         # añadimos algo de ruido pero si la turbina esta parada no debe moverse
         'turbine_rpm': [max(0.0, (r + random.uniform(-5,5)) if r > 0 else 0.0) for r in state['turbine_rpm']],
@@ -248,6 +262,7 @@ def index():
         'temperature': [v + random.uniform(-0.5,0.5) for v in state['history']['temperature']],
         'wind_speed': [v + random.uniform(-0.5,0.5) for v in state['history']['wind_speed']],
         'water_temp': [v + random.uniform(-0.2,0.2) for v in state['history']['water_temp']],
+        'water_weight': [v + random.uniform(-50,50) for v in state['history']['water_weight']],
         'turbine_temp': [v + random.uniform(-0.5,0.5) for v in state['history']['turbine_temp']],
         'power': [v + random.uniform(-0.2,0.2) for v in state['history']['power']],
         'rpm': [v + random.uniform(-5,5) for v in state['history']['rpm']]
@@ -303,6 +318,7 @@ def api_state():
         'wind_speed': state['wind_speed'] + random.uniform(-0.5, 0.5),
         'dam_broken': state['dam_broken'],
         'water_temp': state['water_temp'] + random.uniform(-0.2, 0.2),
+        'water_weight': state['water_weight'] + random.uniform(-50, 50),
         'turbine_temps': [t + random.uniform(-0.5, 0.5) for t in state['turbine_temps']],
         'turbine_rpm': [max(0.0, (r + random.uniform(-5, 5)) if r > 0 else 0.0) for r in state['turbine_rpm']],
         'turbine_broken': list(state['turbine_broken']),
@@ -318,6 +334,7 @@ def api_state():
         'temperature': [v + random.uniform(-0.5, 0.5) for v in state['history']['temperature']],
         'wind_speed': [v + random.uniform(-0.5, 0.5) for v in state['history']['wind_speed']],
         'water_temp': [v + random.uniform(-0.2, 0.2) for v in state['history']['water_temp']],
+        'water_weight': [v + random.uniform(-50, 50) for v in state['history']['water_weight']],
         'turbine_temp': [v + random.uniform(-0.5, 0.5) for v in state['history']['turbine_temp']],
         'power': [v + random.uniform(-0.2, 0.2) for v in state['history']['power']],
         'rpm': [v + random.uniform(-5, 5) for v in state['history']['rpm']]
@@ -330,6 +347,7 @@ def api_state():
         'WEIGHT_MAX': WEIGHT_MAX,
         'PRESSURE_WARN': PRESSURE_WARN,
         'PRESSURE_MAX': PRESSURE_MAX,
+        'water_weight': session_state['water_weight']
     }
 
 

@@ -19,6 +19,10 @@ Al iniciar todas las compuertas están cerradas y las turbinas detenidas.
 
 El tablero muestra en todo momento nivel de agua, presión y caudal. Si todas las puertas están cerradas el caudal es cero. Cada compuerta tiene una turbina asociada que comienza a girar al abrirse y su velocidad depende de la presión del agua.
 Las turbinas solo arrancan cuando el caudal total supera los 2 m³/s y nunca giran a menos de 2000 rpm. Si están paradas se mantienen a la temperatura ambiental menos tres grados. Cuando están girando su temperatura se incrementa un grado por cada 1000 rpm. La potencia generada sigue la fórmula física **P = ρ · g · Q · H** (densidad del agua, gravedad, caudal y altura en metros) por lo que aumenta con el nivel y el caudal.
+El peso del agua se calcula a partir del volumen almacenado mediante **P = V × γ**,
+donde `γ` es el peso específico del agua (aprox. 9810 N/m³). Para simplificar,
+asumimos un área de 1000 m² por metro de altura, por lo que 1 m de nivel
+equivale a unas 1000 toneladas de masa de agua.
 Cuando el nivel supera los 250 m o la presión pasa de 280 bar aparece un aviso de peligro y la presa puede romperse e inundar la ciudad.
 
  Tambien se registran la temperatura del agua y de cada turbina, la velocidad de rotacion (rpm) y la energia generada por la central hidroelectrica. Cada puerta dispone de una turbina asociada.

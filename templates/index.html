@@ -68,12 +68,12 @@
           <p class="mb-1"><i class="bi bi-water"></i> Nivel: <strong id="lvl">{{ "%.2f"|format(state['water_level']) }}</strong> m</p>
           <p class="mb-1"><i class="bi bi-speedometer"></i> Presión: <strong id="press">{{ "%.2f"|format(state['pressure']) }}</strong> bar</p>
           <p class="mb-1"><i class="bi bi-tropical-storm"></i> Caudal: <strong id="flow">{{ "%.2f"|format(state['flow']) }}</strong> m³/s</p>
-          <p class="mb-1"><i class="bi bi-box"></i> Peso aprox: <strong id="weight">{{ "%.2f"|format(state['water_level']*1000) }}</strong> t</p>
+          <p class="mb-1"><i class="bi bi-box"></i> Peso aprox: <strong id="weight">{{ "%.2f"|format(state['water_weight']) }}</strong> t</p>
           <p class="mb-1"><i class="bi bi-droplet-half"></i> Temp. agua: <strong id="wtemp">{{ "%.1f"|format(state['water_temp']) }}</strong> °C</p>
           <p class="mb-1"><i class="bi bi-thermometer"></i> Temp. turbinas: <strong id="ttemp">{{ "%.1f"|format(state['turbine_temps'][0]) }}</strong> °C</p>
           <p class="mb-1"><i class="bi bi-speedometer"></i> RPM promedio: <strong id="rpm">{{ "%.0f"|format(state['rpm_avg']) }}</strong> rpm</p>
           <p class="mb-1"><i class="bi bi-lightning-fill"></i> Potencia total: <strong id="power">{{ "%.2f"|format(state['power']) }}</strong> MW</p>
-          {% set weight = state['water_level']*1000 %}
+          {% set weight = state['water_weight'] %}
           {% if weight >= WEIGHT_WARN or state['pressure'] >= PRESSURE_WARN %}
           <div class="alert alert-danger mt-2">⚠️ Riesgo crítico de colapso</div>
           {% endif %}
@@ -182,7 +182,7 @@
     const charts = {};
     function createCharts(hist){
       const labels = hist.time.map(t => new Date(t*1000).toLocaleTimeString());
-      const weight = hist.water_level.map(v=>v*1000);
+      const weight = hist.water_weight;
       const warnWeight = hist.time.map(()=> {{ WEIGHT_WARN }});
       const maxWeight = hist.time.map(()=> {{ WEIGHT_MAX }});
       const warnPressure = hist.time.map(()=> {{ PRESSURE_WARN }});
@@ -200,7 +200,7 @@
 
     function updateCharts(hist){
       const labels = hist.time.map(t=>new Date(t*1000).toLocaleTimeString());
-      const weight = hist.water_level.map(v=>v*1000);
+      const weight = hist.water_weight;
       const warnWeight = hist.time.map(()=> {{ WEIGHT_WARN }});
       const maxWeight = hist.time.map(()=> {{ WEIGHT_MAX }});
       const warnPressure = hist.time.map(()=> {{ PRESSURE_WARN }});
@@ -261,7 +261,7 @@
       document.getElementById('lvl').textContent = st.water_level.toFixed(2);
       document.getElementById('press').textContent = st.pressure.toFixed(2);
       document.getElementById('flow').textContent = st.flow.toFixed(2);
-      document.getElementById('weight').textContent = (st.water_level*1000).toFixed(2);
+      document.getElementById('weight').textContent = st.water_weight.toFixed(2);
       document.getElementById('wtemp').textContent = st.water_temp.toFixed(1);
       document.getElementById('ttemp').textContent = st.turbine_temps[0].toFixed(1);
       document.getElementById('rpm').textContent = st.rpm_avg.toFixed(0);
