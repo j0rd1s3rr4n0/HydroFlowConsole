@@ -10,11 +10,12 @@ app = Flask(__name__)
 
 # --- simulacion de estado de la presa ---
 NUM_GATES = 5
-MAX_LEVEL = 100.0
+# altura maxima de la presa antes de que el agua la supere (metros)
+MAX_LEVEL = 250.0
 state = {
     'gates': [False] * NUM_GATES,  # False = cerrada
     'water_level': 50.0,           # metros
-    'pressure': 40.0,              # bar (aprox)
+    'pressure': 56.0,              # bar (aprox)
     'flow': 0.0,                   # m3/s
     'weather': 'soleado',
     'rain_timer': 0,
@@ -52,8 +53,9 @@ def update_state():
             # tras la rotura, el agua sale sin control
             state['flow'] = 5.0
             state['water_level'] = max(state['water_level'] - state['flow'], 0)
-            state['pressure'] = 30 + state['water_level'] * 0.6
-            if state['pressure'] > 100:
+            # presion aproximada en bar (escala simplificada)
+            state['pressure'] = state['water_level'] * 1.12
+            if state['pressure'] >= 280 or state['water_level'] > MAX_LEVEL:
                 state['dam_broken'] = True
         else:
             base_inflow = 0.2
@@ -68,8 +70,8 @@ def update_state():
             state['water_level'] += inflow - outflow
             state['water_level'] = max(state['water_level'], 0)
             state['flow'] = outflow
-            state['pressure'] = 30 + state['water_level'] * 0.6
-            if state['pressure'] > 100:
+            state['pressure'] = state['water_level'] * 1.12
+            if state['pressure'] >= 280:
                 state['dam_broken'] = True
 
             if state['water_level'] > MAX_LEVEL:
@@ -140,7 +142,7 @@ def index():
 
     hist = json.dumps(state['history'])
     return render_template('index.html', session=session, state=state,
-                           history_json=hist)
+                           history_json=hist, MAX_LEVEL=MAX_LEVEL)
 
 # --- interfaz principal ---
 @app.route('/dashboard')

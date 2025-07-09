@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>HydroConsole</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { background:#dfe3e6; font-family: Arial, sans-serif; }
@@ -33,6 +34,18 @@
     <div class="card-body">
       <h5 class="card-title">Estado meteorológico</h5>
       <p class="card-text">Clima actual: <strong id="weather">{{ state['weather'] }}</strong></p>
+    </div>
+  </div>
+  <div class="card mb-3 w-75 mx-auto">
+    <div class="card-body">
+      <h5 class="card-title"><i class="bi bi-speedometer2"></i> Lecturas actuales</h5>
+      <p class="mb-1"><i class="bi bi-water"></i> Nivel: <strong>{{ "%.2f"|format(state['water_level']) }} m</strong></p>
+      <p class="mb-1"><i class="bi bi-speedometer"></i> Presión: <strong>{{ "%.2f"|format(state['pressure']) }} bar</strong></p>
+      <p class="mb-1"><i class="bi bi-tropical-storm"></i> Caudal: <strong>{{ "%.2f"|format(state['flow']) }} m³/s</strong></p>
+      <p class="mb-1"><i class="bi bi-box"></i> Peso aprox: <strong>{{ "%.2f"|format(state['water_level']*1000) }} toneladas</strong></p>
+      {% if state['water_level'] > 250 or state['pressure'] > 280 %}
+      <div class="alert alert-danger mt-2">⚠️ Riesgo crítico de colapso</div>
+      {% endif %}
     </div>
   </div>
   <div id="map" class="mb-3">
@@ -80,14 +93,15 @@
   <script>
     const st = {{ state|tojson }};
     const water = document.getElementById('water');
-    water.style.height = Math.min(st.water_level, 100) + '%';
+    const perc = Math.min(st.water_level / {{ MAX_LEVEL }} * 100, 150);
+    water.style.height = perc + '%';
     for(let i=0;i<st.gates.length;i++){
       if(st.gates[i]){
         document.getElementById('gate'+i).style.background = '#0f0';
         document.getElementById('flow'+i).style.display = 'block';
       }
     }
-    if(st.dam_broken){
+    if(st.dam_broken || st.water_level > {{ MAX_LEVEL }} ){
       document.getElementById('flood').style.display='block';
     }
 
