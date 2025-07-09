@@ -239,19 +239,19 @@ def index():
         'gates': list(state['gates']),
         'water_level': state['water_level'] + random.uniform(-0.5, 0.5),
         'pressure': state['pressure'] + random.uniform(-0.5, 0.5),
-        'flow': (state['flow'] + random.uniform(-0.2, 0.2)) if state['flow'] > 0 else 0.0,
+        'flow': state['flow'] + (random.uniform(-0.2, 0.2) if state['flow'] > 0 else 0.0),
         'weather': state['weather'],
-        'temperature': state['temperature'] + random.uniform(-0.5,0.5),
-        'wind_speed': state['wind_speed'] + random.uniform(-0.5,0.5),
+        'temperature': state['temperature'] + random.uniform(-0.5, 0.5),
+        'wind_speed': state['wind_speed'] + random.uniform(-0.5, 0.5),
         'dam_broken': state['dam_broken'],
-        'water_temp': state['water_temp'] + random.uniform(-0.2,0.2),
-        'water_weight': state['water_weight'] + random.uniform(-50,50),
-        'turbine_temps': [t + random.uniform(-0.5,0.5) for t in state['turbine_temps']],
+        'water_temp': state['water_temp'] + random.uniform(-0.2, 0.2),
+        'water_weight': state['water_weight'] + random.uniform(-50, 50),
+        'turbine_temps': [t + random.uniform(-0.5, 0.5) for t in state['turbine_temps']],
         # añadimos algo de ruido pero si la turbina esta parada no debe moverse
-        'turbine_rpm': [max(0.0, (r + random.uniform(-5,5)) if r > 0 else 0.0) for r in state['turbine_rpm']],
+        'turbine_rpm': [max(0.0, (r + random.uniform(-5, 5)) if r > 0 else 0.0) for r in state['turbine_rpm']],
         'turbine_broken': list(state['turbine_broken']),
-        'rpm_avg': max(0.0, sum(state['turbine_rpm'])/NUM_GATES + (random.uniform(-5,5) if any(state['turbine_rpm']) else 0)),
-        'power': state['power'] + random.uniform(-0.2,0.2)
+        'rpm_avg': max(0.0, sum(state['turbine_rpm']) / NUM_GATES + (random.uniform(-5, 5) if any(state['turbine_rpm']) else 0)),
+        'power': state['power'] + (random.uniform(-0.2, 0.2) if state['power'] > 0 else 0.0)
     }
 
     hist_copy = {
@@ -264,8 +264,8 @@ def index():
         'water_temp': [v + random.uniform(-0.2,0.2) for v in state['history']['water_temp']],
         'water_weight': [v + random.uniform(-50,50) for v in state['history']['water_weight']],
         'turbine_temp': [v + random.uniform(-0.5,0.5) for v in state['history']['turbine_temp']],
-        'power': [v + random.uniform(-0.2,0.2) for v in state['history']['power']],
-        'rpm': [v + random.uniform(-5,5) for v in state['history']['rpm']]
+        'power': [v + (random.uniform(-0.2,0.2) if v > 0 else 0.0) for v in state['history']['power']],
+        'rpm': [max(0.0, v + (random.uniform(-5,5) if v > 0 else 0.0)) for v in state['history']['rpm']]
     }
 
     hist_json = json.dumps(hist_copy)
@@ -312,7 +312,7 @@ def api_state():
         'gates': list(state['gates']),
         'water_level': state['water_level'] + random.uniform(-0.5, 0.5),
         'pressure': state['pressure'] + random.uniform(-0.5, 0.5),
-        'flow': (state['flow'] + random.uniform(-0.2, 0.2)) if state['flow'] > 0 else 0.0,
+        'flow': state['flow'] + (random.uniform(-0.2, 0.2) if state['flow'] > 0 else 0.0),
         'weather': state['weather'],
         'temperature': state['temperature'] + random.uniform(-0.5, 0.5),
         'wind_speed': state['wind_speed'] + random.uniform(-0.5, 0.5),
@@ -323,7 +323,7 @@ def api_state():
         'turbine_rpm': [max(0.0, (r + random.uniform(-5, 5)) if r > 0 else 0.0) for r in state['turbine_rpm']],
         'turbine_broken': list(state['turbine_broken']),
         'rpm_avg': max(0.0, sum(state['turbine_rpm']) / NUM_GATES + (random.uniform(-5, 5) if any(state['turbine_rpm']) else 0)),
-        'power': state['power'] + random.uniform(-0.2, 0.2)
+        'power': state['power'] + (random.uniform(-0.2, 0.2) if state['power'] > 0 else 0.0)
     }
 
     hist_copy = {
@@ -336,8 +336,8 @@ def api_state():
         'water_temp': [v + random.uniform(-0.2, 0.2) for v in state['history']['water_temp']],
         'water_weight': [v + random.uniform(-50, 50) for v in state['history']['water_weight']],
         'turbine_temp': [v + random.uniform(-0.5, 0.5) for v in state['history']['turbine_temp']],
-        'power': [v + random.uniform(-0.2, 0.2) for v in state['history']['power']],
-        'rpm': [v + random.uniform(-5, 5) for v in state['history']['rpm']]
+        'power': [v + (random.uniform(-0.2, 0.2) if v > 0 else 0.0) for v in state['history']['power']],
+        'rpm': [max(0.0, v + (random.uniform(-5, 5) if v > 0 else 0.0)) for v in state['history']['rpm']]
     }
     return {
         'state': session_state,

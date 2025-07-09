@@ -12,13 +12,13 @@ Demo de presa hidraulica y central hidroelectrica vulnerable a deserialización.
   ```
 Al iniciar todas las compuertas están cerradas y las turbinas detenidas.
 3. Entra con `/login/<usuario>` (por ejemplo `/login/eng_jose`).
-4. Accede a `/` para visualizar el mapa de la presa. Se muestran dos cámaras: una general del pueblo (cámara 1) y otra enfocada a las compuertas (cámara 2) para ver mejor su estado.
-   Puedes abrir o cerrar cada puerta si tienes rol de ingeniero o administrador.
+4. Accede a `/` para visualizar el mapa de la presa. Ahora se muestran varias cámaras en cuadrícula: la vista general, las compuertas y las turbinas.
+   Puedes abrir o cerrar cada puerta si tienes rol de ingeniero o administrador. Los gráficos usan Chart.js con un estilo más moderno.
    Las lecturas se refrescan automáticamente cada pocos segundos y difieren entre usuarios para facilitar las pruebas.
 6. Usa `/logout` para cerrar la sesión y borrar la cookie.
 
 El tablero muestra en todo momento nivel de agua, presión y caudal. Si todas las puertas están cerradas el caudal es cero. Cada compuerta tiene una turbina asociada que comienza a girar al abrirse y su velocidad depende de la presión del agua.
-Las turbinas solo arrancan cuando el caudal total supera los 2 m³/s y nunca giran a menos de 2000 rpm. Si están paradas se mantienen a la temperatura ambiental menos tres grados. Cuando están girando su temperatura se incrementa un grado por cada 1000 rpm. La potencia generada sigue la fórmula física **P = ρ · g · Q · H** (densidad del agua, gravedad, caudal y altura en metros) por lo que aumenta con el nivel y el caudal.
+Las turbinas solo arrancan cuando el caudal total supera los 2 m³/s y nunca giran a menos de 2000 rpm. Si están paradas se mantienen a la temperatura ambiental menos tres grados. Cuando están girando su temperatura se incrementa un grado por cada 1000 rpm. La potencia generada sigue la fórmula física **P = ρ · g · Q · H** (densidad del agua, gravedad, caudal y altura en metros), por lo que aumenta con el nivel y el caudal. Si no hay caudal, la potencia mostrada es 0 MW.
 El peso del agua se calcula a partir del volumen almacenado mediante **P = V × γ**,
 donde `γ` es el peso específico del agua (aprox. 9810 N/m³). Para simplificar,
 asumimos un área de 1000 m² por metro de altura, por lo que 1 m de nivel
