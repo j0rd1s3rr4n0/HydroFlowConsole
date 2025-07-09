@@ -8,19 +8,25 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { background:#dfe3e6; font-family: Arial, sans-serif; }
-    #map { position:relative; width:600px; height:300px; margin:auto; border:2px solid #666; background:#c9d1d9; }
-    #dam { position:absolute; bottom:100px; left:250px; width:100px; height:100px; background:#555; }
-    .gate { position:absolute; bottom:0; width:15px; height:40px; background:#333; }
+    #map { position:relative; width:600px; height:300px; margin:auto; border:2px solid #666; background:#222 url('https://dummyimage.com/600x300/aaaaaa/ffffff&text=Presa'); background-size:cover; color:#0f0; }
+    #map::after { content:''; position:absolute; inset:0; border:1px solid rgba(255,255,255,0.2); pointer-events:none; }
+    #cam-overlay { position:absolute; top:5px; left:5px; background:rgba(0,0,0,0.5); padding:2px 4px; font-size:12px; font-family:monospace; }
+    #dam { position:absolute; bottom:100px; left:250px; width:100px; height:100px; background:#555; opacity:0.8; }
+    .gate { position:absolute; bottom:0; width:15px; height:40px; background:#333; opacity:0.9; }
     #gate0 { left:5px; }
     #gate1 { left:25px; }
     #gate2 { left:45px; }
     #gate3 { left:65px; }
     #gate4 { left:85px; }
-    .flow { position:absolute; bottom:-20px; width:15px; height:20px; background:blue; display:none; }
-    #water { position:absolute; bottom:0; left:0; width:100%; background:rgba(0,0,255,0.5); }
-    #city { position:absolute; bottom:0; left:0; width:100%; height:100px; background:#aaa; }
-    .house { position:absolute; bottom:10px; width:20px; height:20px; background:#fff; border:1px solid #333; }
+    .flow { position:absolute; bottom:-20px; width:15px; height:20px; background:rgba(0, 170, 255, 0.6); display:none; }
+    #water { position:absolute; bottom:0; left:0; width:100%; background:rgba(0,0,255,0.4); }
+    #city { position:absolute; bottom:0; left:0; width:100%; height:100px; background:#777; opacity:0.9; }
+    .house { position:absolute; bottom:10px; width:20px; height:20px; background:#eee; border:1px solid #333; }
     #flood { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,255,0.3); display:none; }
+    .cam-cross { position:absolute; top:0; left:0; right:0; bottom:0; pointer-events:none; }
+    .cam-cross::before, .cam-cross::after { content:''; position:absolute; background:rgba(255,255,255,0.3); }
+    .cam-cross::before { top:50%; left:0; right:0; height:1px; }
+    .cam-cross::after { left:50%; top:0; bottom:0; width:1px; }
   </style>
 </head>
 <body class="container py-3">
@@ -49,6 +55,7 @@
     </div>
   </div>
   <div id="map" class="mb-3">
+    <div id="cam-overlay">CAMERA 1 - Presa Tramuntana <span id="cam-time"></span></div>
     <div id="city">
       <div class="house" style="left:50px"></div>
       <div class="house" style="left:100px"></div>
@@ -63,6 +70,7 @@
     </div>
     <div id="water"></div>
     <div id="flood"></div>
+    <div class="cam-cross"></div>
   </div>
   {% if session and session['role'] in ['engineer','admin'] %}
   <div class="mb-4">
@@ -131,6 +139,7 @@
       type:'line',
       data:{labels:labels, datasets:[{label:'Caudal', data:hist.flow, borderColor:'green', fill:false}]}
     });
+    document.getElementById('cam-time').textContent = new Date().toLocaleTimeString();
     setTimeout(()=>location.reload(),10000);
   </script>
 </body>
