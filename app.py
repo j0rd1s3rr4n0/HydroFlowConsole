@@ -92,10 +92,10 @@ def update_state():
 
         # actualiza temperatura y rpm de cada turbina dependiendo del flujo
         total_power = 0.0
-        open_count = sum(state['gates'])
         for i, open_ in enumerate(state['gates']):
-            if open_ and not state['dam_broken'] and not state['turbine_broken'][i] and open_count > 2:
-                # la turbina se calienta ligeramente y gira segun la presion
+            if open_ and not state['dam_broken'] and not state['turbine_broken'][i]:
+                # la turbina se calienta ligeramente y gira en proporcion a la
+                # presion ejercida por el agua que pasa por su compuerta
                 state['turbine_temps'][i] += 0.3
                 target_rpm = state['pressure'] * 8
                 state['turbine_rpm'][i] += (target_rpm - state['turbine_rpm'][i]) * 0.1
@@ -109,7 +109,7 @@ def update_state():
                 state['turbine_broken'][i] = True
                 state['turbine_rpm'][i] = 0
 
-            if not state['turbine_broken'][i] and open_count > 2:
+            if not state['turbine_broken'][i] and open_:
                 total_power += state['turbine_rpm'][i] * 0.05
 
         if state['dam_broken']:
