@@ -31,8 +31,10 @@ state = {
 
 # --- funciones auxiliares ---
 
+UPDATE_INTERVAL = 3  # segundos
+
 def update_state():
-    """Actualiza cada 10 segundos la simulación de la presa"""
+    """Actualiza la simulación de la presa cada pocos segundos"""
     while True:
         # eventos meteorológicos
         if state['rain_timer'] > 0:
@@ -94,7 +96,7 @@ def update_state():
             for k in state['history']:
                 state['history'][k].pop(0)
 
-        time.sleep(10)
+        time.sleep(UPDATE_INTERVAL)
 
 # --- autenticacion insegura ---
 
@@ -140,9 +142,27 @@ def index():
         except Exception:
             session = None
 
-    hist = json.dumps(state['history'])
-    return render_template('index.html', session=session, state=state,
-                           history_json=hist, MAX_LEVEL=MAX_LEVEL)
+    # copia del estado con ruido para que cada cliente vea valores ligeramente
+    # distintos; esto no afecta al estado real
+    session_state = {
+        'gates': list(state['gates']),
+        'water_level': state['water_level'] + random.uniform(-0.5, 0.5),
+        'pressure': state['pressure'] + random.uniform(-0.5, 0.5),
+        'flow': state['flow'] + random.uniform(-0.2, 0.2),
+        'weather': state['weather'],
+        'dam_broken': state['dam_broken']
+    }
+
+    hist_copy = {
+        'time': list(state['history']['time']),
+        'water_level': [v + random.uniform(-0.5, 0.5) for v in state['history']['water_level']],
+        'pressure': [v + random.uniform(-0.5, 0.5) for v in state['history']['pressure']],
+        'flow': [v + random.uniform(-0.2, 0.2) for v in state['history']['flow']]
+    }
+
+    hist_json = json.dumps(hist_copy)
+    return render_template('index.html', session=session, state=session_state,
+                           history_json=hist_json, MAX_LEVEL=MAX_LEVEL)
 
 # --- interfaz principal ---
 @app.route('/dashboard')
