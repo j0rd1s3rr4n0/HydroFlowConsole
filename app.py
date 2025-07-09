@@ -24,6 +24,7 @@ RPM_MIN = 2000.0
 RPM_WARN = 4500.0
 RPM_MAX = 5000.0
 POWER_MAX = 200.0
+SYSTEM_FAILED = False
 state = {
     'gates': [False] * NUM_GATES,  # False = cerrada
     'water_level': 50.0,           # metros
@@ -73,6 +74,44 @@ def _recalc_flow_power():
         state['flow'] = open_count * 1.0
     state['power'] = WATER_DENSITY * GRAVITY * state['flow'] * state['water_level'] / 1_000_000
 
+def zero_state():
+    """Put every state value to zero after a catastrophic failure."""
+    state['gates'] = [False] * NUM_GATES
+    state['water_level'] = 0.0
+    state['pressure'] = 0.0
+    state['flow'] = 0.0
+    state['temperature'] = 0.0
+    state['wind_speed'] = 0.0
+    state['water_temp'] = 0.0
+    state['turbine_temps'] = [0.0] * NUM_GATES
+    state['turbine_rpm'] = [0.0] * NUM_GATES
+    state['turbine_broken'] = [True] * NUM_GATES
+    state['power'] = 0.0
+    state['water_weight'] = 0.0
+    state['water_volume'] = 0.0
+    state['water_liters'] = 0.0
+    state['rain_timer'] = 0
+    state['dam_broken'] = True
+    state['overflow_start'] = None
+    for k in state['history']:
+        state['history'][k] = [0]
+
+def set_failure():
+    """Mark the system as failed and zero all values."""
+    global SYSTEM_FAILED
+    SYSTEM_FAILED = True
+    zero_state()
+
+
+@app.before_request
+def check_failure():
+    """Abort with 500 whenever the system has failed."""
+    if SYSTEM_FAILED:
+        abort(500)
+    if state['dam_broken'] or state['power'] > POWER_MAX:
+        set_failure()
+        abort(500)
+
 def calc_alert():
     """Return alert level and parameters that exceed thresholds."""
     warn = []
@@ -103,6 +142,9 @@ def calc_alert():
 def update_state():
     """Actualiza la simulación de la presa cada pocos segundos"""
     while True:
+        if SYSTEM_FAILED:
+            time.sleep(UPDATE_INTERVAL)
+            continue
         # eventos meteorológicos
         if state['rain_timer'] > 0:
             state['rain_timer'] -= 10
@@ -276,8 +318,6 @@ def index():
     except Exception:
         return 'Cookie inv\xc3\xa1lida', 400
 
-    if state['power'] > POWER_MAX:
-        abort(500)
 
     # copia del estado con ruido para que cada cliente vea valores ligeramente
     # distintos; esto no afecta al estado real
@@ -377,8 +417,6 @@ def gates_all(action):
 def api_state():
     """Devuelve el estado actual con ruido para actualizaciones AJAX"""
     raw = request.cookies.get('session')
-    if state['power'] > POWER_MAX:
-        abort(500)
 
     session_state = {
         'gates': list(state['gates']),
