@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>HydroConsole</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { background:#dfe3e6; font-family: Arial, sans-serif; }
+    #map { position:relative; width:600px; height:300px; margin:auto; border:2px solid #666; background:#c9d1d9; }
+    #dam { position:absolute; bottom:100px; left:250px; width:100px; height:100px; background:#555; }
+    .gate { position:absolute; bottom:0; width:15px; height:40px; background:#333; }
+    #gate0 { left:5px; }
+    #gate1 { left:25px; }
+    #gate2 { left:45px; }
+    #gate3 { left:65px; }
+    #gate4 { left:85px; }
+    .flow { position:absolute; bottom:-20px; width:15px; height:20px; background:blue; display:none; }
+    #water { position:absolute; bottom:0; left:0; width:100%; background:rgba(0,0,255,0.5); }
+    #city { position:absolute; bottom:0; left:0; width:100%; height:100px; background:#aaa; }
+    #flood { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,255,0.3); display:none; }
+  </style>
+</head>
+<body class="container py-3">
+  <h1 class="mb-3">Centro de Control - Presa de Tramuntana</h1>
+  {% if session %}
+  <p>Bienvenido {{ session['user'] }} ({{ session['role'] }})</p>
+  {% else %}
+  <p><a href="/login/visitante">Iniciar sesión de prueba</a></p>
+  {% endif %}
+  <p>Clima actual: <strong>{{ state['weather'] }}</strong></p>
+  <div id="map" class="mb-3">
+    <div id="city"></div>
+    <div id="dam">
+      {% for g in range(state['gates']|length) %}
+      <div id="gate{{g}}" class="gate"></div>
+      <div id="flow{{g}}" class="flow" style="left:{{5+20*g}}px"></div>
+      {% endfor %}
+    </div>
+    <div id="water"></div>
+    <div id="flood"></div>
+  </div>
+  {% if session and session['role'] in ['engineer','admin'] %}
+  <div class="mb-4">
+    {% for g in range(state['gates']|length) %}
+    <form action="{{ url_for('gate', gid=g, action='open') }}" method="post" class="d-inline">
+      <button class="btn btn-sm btn-danger">Abrir {{g+1}}</button>
+    </form>
+    <form action="{{ url_for('gate', gid=g, action='close') }}" method="post" class="d-inline">
+      <button class="btn btn-sm btn-primary">Cerrar {{g+1}}</button>
+    </form>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <canvas id="chart" height="80"></canvas>
+  <script>
+    const st = {{ state|tojson }};
+    const water = document.getElementById('water');
+    water.style.height = Math.min(st.water_level, 100) + '%';
+    for(let i=0;i<st.gates.length;i++){
+      if(st.gates[i]){
+        document.getElementById('gate'+i).style.background = '#0f0';
+        document.getElementById('flow'+i).style.display = 'block';
+      }
+    }
+    if(st.dam_broken){
+      document.getElementById('flood').style.display='block';
+    }
+
+    const hist = {{ history_json|safe }};
+    const labels = hist.time.map(t => new Date(t*1000).toLocaleTimeString());
+    const data = {
+      labels: labels,
+      datasets:[
+        {label:'Nivel', data:hist.water_level, borderColor:'blue', fill:false},
+        {label:'Presión', data:hist.pressure, borderColor:'red', fill:false},
+        {label:'Caudal', data:hist.flow, borderColor:'green', fill:false}
+      ]
+    };
+    new Chart(document.getElementById('chart'), {type:'line', data});
+    setTimeout(()=>location.reload(),10000);
+  </script>
+</body>
+</html>
