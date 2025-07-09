@@ -12,12 +12,19 @@ app = Flask(__name__)
 NUM_GATES = 5
 # altura maxima de la presa antes de que el agua la supere (metros)
 MAX_LEVEL = 250.0
+# limites para avisos de seguridad
+WEIGHT_WARN = 60000.0
+WEIGHT_MAX = 80000.0
+PRESSURE_WARN = WEIGHT_WARN / 1000 * 1.12  # bar equivalentes
+PRESSURE_MAX = WEIGHT_MAX / 1000 * 1.12
 state = {
     'gates': [False] * NUM_GATES,  # False = cerrada
     'water_level': 50.0,           # metros
     'pressure': 56.0,              # bar (aprox)
     'flow': 0.0,                   # m3/s
     'weather': 'soleado',
+    'temperature': 20.0,      # grados C
+    'wind_speed': 5.0,        # km/h (simple aproximacion)
     'rain_timer': 0,
     'dam_broken': False,
     'overflow_start': None,
@@ -25,7 +32,9 @@ state = {
         'time': [],
         'water_level': [],
         'pressure': [],
-        'flow': []
+        'flow': [],
+        'temperature': [],
+        'wind_speed': []
     }
 }
 
@@ -50,6 +59,19 @@ def update_state():
                 state['rain_timer'] = 60
             else:
                 state['weather'] = 'soleado'
+
+        # actualiza temperatura y viento de forma simple segun el clima
+        if state['weather'] == 'lluvia fuerte':
+            state['temperature'] += random.uniform(-0.4, 0.2) - 1
+            state['wind_speed'] += random.uniform(1, 3)
+        elif state['weather'] == 'lluvia':
+            state['temperature'] += random.uniform(-0.3, 0.3) - 0.5
+            state['wind_speed'] += random.uniform(-0.5, 1)
+        else:
+            state['temperature'] += random.uniform(-0.2, 0.5)
+            state['wind_speed'] += random.uniform(-0.5, 0.5)
+        state['temperature'] = max(5, min(state['temperature'], 35))
+        state['wind_speed'] = max(0, min(state['wind_speed'], 40))
 
         if state['dam_broken']:
             # tras la rotura, el agua sale sin control
@@ -92,6 +114,8 @@ def update_state():
         state['history']['water_level'].append(state['water_level'])
         state['history']['pressure'].append(state['pressure'])
         state['history']['flow'].append(state['flow'])
+        state['history']['temperature'].append(state['temperature'])
+        state['history']['wind_speed'].append(state['wind_speed'])
         if len(state['history']['time']) > 50:
             for k in state['history']:
                 state['history'][k].pop(0)
@@ -150,6 +174,8 @@ def index():
         'pressure': state['pressure'] + random.uniform(-0.5, 0.5),
         'flow': state['flow'] + random.uniform(-0.2, 0.2),
         'weather': state['weather'],
+        'temperature': state['temperature'] + random.uniform(-0.5,0.5),
+        'wind_speed': state['wind_speed'] + random.uniform(-0.5,0.5),
         'dam_broken': state['dam_broken']
     }
 
@@ -157,12 +183,18 @@ def index():
         'time': list(state['history']['time']),
         'water_level': [v + random.uniform(-0.5, 0.5) for v in state['history']['water_level']],
         'pressure': [v + random.uniform(-0.5, 0.5) for v in state['history']['pressure']],
-        'flow': [v + random.uniform(-0.2, 0.2) for v in state['history']['flow']]
+        'flow': [v + random.uniform(-0.2, 0.2) for v in state['history']['flow']],
+        'temperature': [v + random.uniform(-0.5,0.5) for v in state['history']['temperature']],
+        'wind_speed': [v + random.uniform(-0.5,0.5) for v in state['history']['wind_speed']]
     }
 
     hist_json = json.dumps(hist_copy)
-    return render_template('index.html', session=session, state=session_state,
-                           history_json=hist_json, MAX_LEVEL=MAX_LEVEL)
+    return render_template(
+        'index.html', session=session, state=session_state,
+        history_json=hist_json, MAX_LEVEL=MAX_LEVEL,
+        WEIGHT_WARN=WEIGHT_WARN, WEIGHT_MAX=WEIGHT_MAX,
+        PRESSURE_WARN=PRESSURE_WARN, PRESSURE_MAX=PRESSURE_MAX
+    )
 
 # --- interfaz principal ---
 @app.route('/dashboard')

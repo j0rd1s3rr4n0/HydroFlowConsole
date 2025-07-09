@@ -7,7 +7,8 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { background:#dfe3e6; font-family: Arial, sans-serif; }
+    body { background:#c3d9ff; font-family: Tahoma, sans-serif; }
+    .card { box-shadow: 2px 2px 4px #888; }
     #map { position:relative; width:600px; height:300px; margin:auto; border:2px solid #666; background:#222 url('https://dummyimage.com/600x300/aaaaaa/ffffff&text=Presa'); background-size:cover; color:#0f0; }
     #map::after { content:''; position:absolute; inset:0; border:1px solid rgba(255,255,255,0.2); pointer-events:none; }
     #cam-overlay { position:absolute; top:5px; left:5px; background:rgba(0,0,0,0.5); padding:2px 4px; font-size:12px; font-family:monospace; }
@@ -36,10 +37,15 @@
   {% else %}
   <p><a href="/login/visitante">Iniciar sesión de prueba</a></p>
   {% endif %}
-  <div class="card mb-3 w-75 mx-auto">
+  <div class="card mb-3 w-75 mx-auto" style="background:#c0d8ff; border-color:#7aa3d0;">
     <div class="card-body">
       <h5 class="card-title">Estado meteorológico</h5>
-      <p class="card-text">Clima actual: <strong id="weather">{{ state['weather'] }}</strong></p>
+      <p class="card-text">
+        <i class="bi" id="weather-icon"></i>
+        <span id="weather">{{ state['weather'] }}</span> -
+        <i class="bi bi-thermometer-half"></i> {{ "%.1f"|format(state['temperature']) }} °C -
+        <i class="bi bi-wind"></i> {{ "%.1f"|format(state['wind_speed']) }} km/h
+      </p>
     </div>
   </div>
   <div class="card mb-3 w-75 mx-auto">
@@ -49,7 +55,8 @@
       <p class="mb-1"><i class="bi bi-speedometer"></i> Presión: <strong>{{ "%.2f"|format(state['pressure']) }} bar</strong></p>
       <p class="mb-1"><i class="bi bi-tropical-storm"></i> Caudal: <strong>{{ "%.2f"|format(state['flow']) }} m³/s</strong></p>
       <p class="mb-1"><i class="bi bi-box"></i> Peso aprox: <strong>{{ "%.2f"|format(state['water_level']*1000) }} toneladas</strong></p>
-      {% if state['water_level'] > 250 or state['pressure'] > 280 %}
+      {% set weight = state['water_level']*1000 %}
+      {% if weight >= WEIGHT_WARN or state['pressure'] >= PRESSURE_WARN %}
       <div class="alert alert-danger mt-2">⚠️ Riesgo crítico de colapso</div>
       {% endif %}
     </div>
@@ -97,9 +104,16 @@
     <div class="col-md-6">
       <canvas id="chartFlow" height="80"></canvas>
     </div>
+    <div class="col-md-6">
+      <canvas id="chartWeight" height="80"></canvas>
+    </div>
   </div>
   <script>
     const st = {{ state|tojson }};
+    const weatherIcon = document.getElementById('weather-icon');
+    if(st.weather === 'lluvia fuerte') weatherIcon.classList.add('bi-cloud-lightning-rain');
+    else if(st.weather === 'lluvia') weatherIcon.classList.add('bi-cloud-rain');
+    else weatherIcon.classList.add('bi-brightness-high');
     const water = document.getElementById('water');
     const perc = Math.min(st.water_level / {{ MAX_LEVEL }} * 100, 150);
     water.style.height = perc + '%';
@@ -115,29 +129,61 @@
 
     const hist = {{ history_json|safe }};
     const labels = hist.time.map(t => new Date(t*1000).toLocaleTimeString());
+    const weight = hist.water_level.map(v => v*1000);
+    const warnWeight = hist.time.map(()=> {{ WEIGHT_WARN }});
+    const maxWeight = hist.time.map(()=> {{ WEIGHT_MAX }});
+    const warnPressureLine = hist.time.map(()=> {{ PRESSURE_WARN }});
+    const maxPressureLine = hist.time.map(()=> {{ PRESSURE_MAX }});
     const dataGeneral = {
       labels: labels,
       datasets:[
         {label:'Nivel', data:hist.water_level, borderColor:'blue', fill:false},
         {label:'Presión', data:hist.pressure, borderColor:'red', fill:false},
-        {label:'Caudal', data:hist.flow, borderColor:'green', fill:false}
+        {label:'Caudal', data:hist.flow, borderColor:'green', fill:false},
+        {label:'Peso', data:weight, borderColor:'orange', fill:false}
       ]
     };
     new Chart(document.getElementById('chartGeneral'), {type:'line', data:dataGeneral});
 
     new Chart(document.getElementById('chartLevel'), {
       type:'line',
-      data:{labels:labels, datasets:[{label:'Nivel', data:hist.water_level, borderColor:'blue', fill:false}]}
+      data:{
+        labels:labels,
+        datasets:[
+          {label:'Nivel', data:hist.water_level, borderColor:'blue', fill:false},
+          {label:'Aviso', data:hist.time.map(()=> {{ WEIGHT_WARN/1000 }}), borderColor:'orange', borderDash:[5,5], fill:false},
+          {label:'Máximo', data:hist.time.map(()=> {{ WEIGHT_MAX/1000 }}), borderColor:'red', borderDash:[5,5], fill:false}
+        ]
+      }
     });
 
     new Chart(document.getElementById('chartPressure'), {
       type:'line',
-      data:{labels:labels, datasets:[{label:'Presión', data:hist.pressure, borderColor:'red', fill:false}]}
+      data:{
+        labels:labels,
+        datasets:[
+          {label:'Presión', data:hist.pressure, borderColor:'red', fill:false},
+          {label:'Aviso', data:warnPressureLine, borderColor:'orange', borderDash:[5,5], fill:false},
+          {label:'Máximo', data:maxPressureLine, borderColor:'black', borderDash:[5,5], fill:false}
+        ]
+      }
     });
 
     new Chart(document.getElementById('chartFlow'), {
       type:'line',
       data:{labels:labels, datasets:[{label:'Caudal', data:hist.flow, borderColor:'green', fill:false}]}
+    });
+
+    new Chart(document.getElementById('chartWeight'), {
+      type:'line',
+      data:{
+        labels:labels,
+        datasets:[
+          {label:'Peso', data:weight, borderColor:'orange', fill:false},
+          {label:'Aviso', data:warnWeight, borderColor:'orange', borderDash:[5,5], fill:false},
+          {label:'Máximo', data:maxWeight, borderColor:'red', borderDash:[5,5], fill:false}
+        ]
+      }
     });
     document.getElementById('cam-time').textContent = new Date().toLocaleTimeString();
     setTimeout(()=>location.reload(),3000);
