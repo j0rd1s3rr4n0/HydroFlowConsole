@@ -12,7 +12,8 @@ Demo de presa hidraulica y central hidroelectrica vulnerable a deserialización.
   ```
 Al iniciar todas las compuertas están cerradas y las turbinas detenidas.
 3. Entra con `/login/<usuario>` (por ejemplo `/login/eng_jose`).
-4. Accede a `/` para visualizar el mapa de la presa. El panel luce un estilo moderno con tarjetas translucidas y gráficos actualizados. Se muestran varias cámaras en cuadrícula: la vista general, las compuertas y las turbinas.
+4. Accede a `/` para visualizar el mapa de la presa. El panel luce un estilo moderno con tarjetas translucidas y gráficos actualizados. Las cámaras se muestran en cuadrícula como si fuese una sala de seguridad: vista general, compuertas y turbinas.
+   Cada cámara de turbina incluye una animación de giro y un chorro de agua cuando la puerta está abierta para aportar realismo.
    Puedes abrir o cerrar cada puerta si tienes rol de ingeniero o administrador. Además existen botones para abrir o cerrar todas las compuertas de una vez.
    Los gráficos utilizan distintos tipos (líneas y barras) según la métrica para una visualización más clara.
    Las lecturas se refrescan automáticamente cada pocos segundos y difieren entre usuarios para facilitar las pruebas.

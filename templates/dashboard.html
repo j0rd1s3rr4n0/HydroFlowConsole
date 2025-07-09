@@ -95,11 +95,28 @@
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 15px;
     }
-    .camera-grid img {
+    .camera-box {
+      position: relative;
       width: 100%;
+      height: 130px;
+      background: #000;
       border: 2px solid #444;
       border-radius: 6px;
+      overflow: hidden;
     }
+    .camera-box .cam-overlay { position:absolute; top:4px; left:4px; background:rgba(0,0,0,0.6); padding:2px 6px; font-size:12px; border-radius:4px; }
+    .camera-box .cam-cross::before, .camera-box .cam-cross::after { content:''; position:absolute; background:rgba(255,255,255,0.25); }
+    .camera-box .cam-cross::before { top:50%; left:0; right:0; height:1px; }
+    .camera-box .cam-cross::after { left:50%; top:0; bottom:0; width:1px; }
+    .turbine {
+      position:absolute; width:60px; height:60px; border:2px solid #999; border-radius:50%; top:35px; left:calc(50% - 30px); background:repeating-conic-gradient(#777 0deg 15deg,#222 15deg 30deg); animation: spin 2s linear infinite;
+    }
+    .waterfall {
+      position:absolute; top:0; left:calc(50% - 5px); width:10px; height:0; background:linear-gradient(180deg,rgba(0,180,255,0.7),rgba(0,180,255,0));
+    }
+    .waterfall.active { animation: fall 0.5s linear infinite; height:100%; }
+    @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+    @keyframes fall { 0%{transform:translateY(-10%);} 100%{transform:translateY(10%);} }
   </style>
 </head>
 <body class="container-fluid py-3">
@@ -178,7 +195,12 @@
   <div class="camera-grid my-3">
     {% for g in range(state['gates']|length) %}
     <div class="cam-item text-center">
-      <img src="https://dummyimage.com/220x130/333/fff&text=Turbina+{{g+1}}" class="img-fluid mb-1" alt="camara turbina {{g+1}}">
+      <div class="camera-box mb-1">
+        <div class="cam-overlay">CAMERA {{g+3}} - Turbina {{g+1}}</div>
+        <div id="waterfall-{{g}}" class="waterfall"></div>
+        <div id="turbine-{{g}}" class="turbine"></div>
+        <div class="cam-cross"></div>
+      </div>
       <div><i class="bi bi-thermometer"></i> <span id="turb-temp-{{g}}">{{ "%.1f"|format(state['turbine_temps'][g]) }}</span> °C</div>
       <div><i class="bi bi-speedometer"></i> <span id="turb-rpm-{{g}}">{{ "%.0f"|format(state['turbine_rpm'][g]) }}</span> rpm</div>
       {% set open_count = state['gates']|select('eq', True)|list|length %}
@@ -428,6 +450,24 @@
           const perFlow = openCount ? st.flow / openCount : 0;
           const p = st.gates[i] ? (1000 * 9.81 * perFlow * st.water_level / 1_000_000) : 0;
           tpow.textContent = p.toFixed(1);
+        }
+        const turb=document.getElementById('turbine-'+i);
+        const fall=document.getElementById('waterfall-'+i);
+        if(turb){
+          if(st.turbine_rpm[i]>0){
+            turb.style.animationDuration = (3600/st.turbine_rpm[i]).toFixed(2)+'s';
+            turb.style.opacity='1';
+          }else{
+            turb.style.animationDuration='0s';
+            turb.style.opacity='0.6';
+          }
+        }
+        if(fall){
+          if(open && st.water_level>1){
+            fall.classList.add('active');
+          }else{
+            fall.classList.remove('active');
+          }
         }
       }
       if(st.dam_broken || st.water_level > {{ MAX_LEVEL }}){
