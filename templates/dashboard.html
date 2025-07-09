@@ -23,9 +23,7 @@
     #map {
       position: relative;
       width: 100%;
-      max-width: 700px;
-      height: 40vh;
-      margin: auto;
+      height: 35vh;
       border: 2px solid #444;
       background: #222 url('https://dummyimage.com/700x350/555/fff&text=Presa') no-repeat center/cover;
       color: #0f0;
@@ -33,9 +31,7 @@
     #gatecam {
       position: relative;
       width: 100%;
-      max-width: 500px;
-      height: 220px;
-      margin: 20px auto;
+      height: 35vh;
       border: 2px solid #444;
       background: #000 url('https://dummyimage.com/500x220/333/fff&text=Compuertas') no-repeat center/cover;
       color: #0f0;
@@ -174,35 +170,40 @@
       </div>
     </div>
   </div>
-  <div id="map" class="mb-3">
-    <div id="cam-overlay" class="cam-overlay">CAMERA 1 - Presa Tramuntana <span id="cam-time"></span></div>
-    <div id="city">
-      <div class="house" style="left:50px"></div>
-      <div class="house" style="left:100px"></div>
-      <div class="house" style="left:150px"></div>
-      <div class="house" style="left:200px"></div>
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <div id="map" class="mb-3">
+        <div id="cam-overlay" class="cam-overlay">CAMERA 1 - Presa Tramuntana <span id="cam-time"></span></div>
+        <div id="city">
+          <div class="house" style="left:50px"></div>
+          <div class="house" style="left:100px"></div>
+          <div class="house" style="left:150px"></div>
+          <div class="house" style="left:200px"></div>
+        </div>
+        <div id="dam">
+          {% for g in range(state['gates']|length) %}
+          <div id="gate{{g}}" class="gate"></div>
+          <div id="flow{{g}}" class="flow" style="left:{{5+20*g}}px"></div>
+          {% endfor %}
+        </div>
+        <div id="water"></div>
+        <div id="flood"></div>
+        <div class="cam-cross"></div>
+      </div>
     </div>
-    <div id="dam">
-      {% for g in range(state['gates']|length) %}
-      <div id="gate{{g}}" class="gate"></div>
-      <div id="flow{{g}}" class="flow" style="left:{{5+20*g}}px"></div>
-      {% endfor %}
+    <div class="col-md-6">
+      <div id="gatecam" class="mb-3">
+        <div id="cam2-overlay" class="cam-overlay">CAMERA 2 - Compuertas</div>
+        <div id="dam2">
+          {% for g in range(state['gates']|length) %}
+          <div id="gate2_{{g}}" class="gate2"></div>
+          <div id="flow2_{{g}}" class="flow2" style="left:{{10+30*g}}px"></div>
+          {% endfor %}
+        </div>
+        <div id="water2"></div>
+        <div class="cam-cross"></div>
+      </div>
     </div>
-  <div id="water"></div>
-  <div id="flood"></div>
-  <div class="cam-cross"></div>
-  </div>
-
-  <div id="gatecam" class="mb-3">
-    <div id="cam2-overlay" class="cam-overlay">CAMERA 2 - Compuertas</div>
-    <div id="dam2">
-      {% for g in range(state['gates']|length) %}
-      <div id="gate2_{{g}}" class="gate2"></div>
-      <div id="flow2_{{g}}" class="flow2" style="left:{{10+30*g}}px"></div>
-      {% endfor %}
-    </div>
-    <div id="water2"></div>
-    <div class="cam-cross"></div>
   </div>
 
   <div class="camera-grid my-3">
