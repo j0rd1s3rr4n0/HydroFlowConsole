@@ -92,14 +92,15 @@ def update_state():
 
         # actualiza temperatura y rpm de cada turbina dependiendo del flujo
         total_power = 0.0
+        open_count = sum(state['gates'])
         for i, open_ in enumerate(state['gates']):
-            if open_ and not state['dam_broken'] and not state['turbine_broken'][i]:
+            if open_ and not state['dam_broken'] and not state['turbine_broken'][i] and open_count > 2:
                 # la turbina se calienta ligeramente y gira segun la presion
                 state['turbine_temps'][i] += 0.3
                 target_rpm = state['pressure'] * 8
                 state['turbine_rpm'][i] += (target_rpm - state['turbine_rpm'][i]) * 0.1
             else:
-                # se enfria y reduce rpm hacia cero
+                # se enfria y reduce rpm hacia cero o no hay suficiente caudal
                 state['turbine_temps'][i] += (state['water_temp'] - state['turbine_temps'][i]) * 0.1
                 state['turbine_rpm'][i] *= 0.9
 
@@ -108,7 +109,7 @@ def update_state():
                 state['turbine_broken'][i] = True
                 state['turbine_rpm'][i] = 0
 
-            if not state['turbine_broken'][i]:
+            if not state['turbine_broken'][i] and open_count > 2:
                 total_power += state['turbine_rpm'][i] * 0.05
 
         if state['dam_broken']:
@@ -219,7 +220,7 @@ def index():
         'gates': list(state['gates']),
         'water_level': state['water_level'] + random.uniform(-0.5, 0.5),
         'pressure': state['pressure'] + random.uniform(-0.5, 0.5),
-        'flow': state['flow'] + random.uniform(-0.2, 0.2),
+        'flow': (state['flow'] + random.uniform(-0.2, 0.2)) if state['flow'] > 0 else 0.0,
         'weather': state['weather'],
         'temperature': state['temperature'] + random.uniform(-0.5,0.5),
         'wind_speed': state['wind_speed'] + random.uniform(-0.5,0.5),
@@ -236,7 +237,7 @@ def index():
         'time': list(state['history']['time']),
         'water_level': [v + random.uniform(-0.5, 0.5) for v in state['history']['water_level']],
         'pressure': [v + random.uniform(-0.5, 0.5) for v in state['history']['pressure']],
-        'flow': [v + random.uniform(-0.2, 0.2) for v in state['history']['flow']],
+        'flow': [v + random.uniform(-0.2, 0.2) if v > 0 else 0.0 for v in state['history']['flow']],
         'temperature': [v + random.uniform(-0.5,0.5) for v in state['history']['temperature']],
         'wind_speed': [v + random.uniform(-0.5,0.5) for v in state['history']['wind_speed']],
         'water_temp': [v + random.uniform(-0.2,0.2) for v in state['history']['water_temp']],

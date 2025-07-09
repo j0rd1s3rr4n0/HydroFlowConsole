@@ -9,18 +9,28 @@
   <style>
     body { background:#c3d9ff; font-family: Tahoma, sans-serif; }
     .card { box-shadow: 2px 2px 4px #888; }
-    #map { position:relative; width:600px; height:300px; margin:auto; border:2px solid #666; background:#222 url('https://dummyimage.com/600x300/aaaaaa/ffffff&text=Presa'); background-size:cover; color:#0f0; }
+    #map { position:relative; width:700px; height:350px; margin:auto; border:2px solid #666; background:#222 url('https://dummyimage.com/700x350/aaaaaa/ffffff&text=Presa'); background-size:cover; color:#0f0; }
+    #gatecam { position:relative; width:500px; height:220px; margin:20px auto; border:2px solid #666; background:#000 url('https://dummyimage.com/500x220/444/fff&text=Compuertas'); background-size:cover; color:#0f0; }
     #map::after { content:''; position:absolute; inset:0; border:1px solid rgba(255,255,255,0.2); pointer-events:none; }
-    #cam-overlay { position:absolute; top:5px; left:5px; background:rgba(0,0,0,0.5); padding:2px 4px; font-size:12px; font-family:monospace; }
+    .cam-overlay { position:absolute; top:5px; left:5px; background:rgba(0,0,0,0.5); padding:2px 4px; font-size:12px; font-family:monospace; }
     #dam { position:absolute; bottom:100px; left:250px; width:100px; height:100px; background:#555; opacity:0.8; }
+    #dam2 { position:absolute; bottom:40px; left:180px; width:140px; height:140px; background:#555; opacity:0.8; }
     .gate { position:absolute; bottom:0; width:15px; height:40px; background:#333; opacity:0.9; }
+    .gate2 { position:absolute; bottom:0; width:20px; height:60px; background:#333; opacity:0.9; }
     #gate0 { left:5px; }
     #gate1 { left:25px; }
     #gate2 { left:45px; }
     #gate3 { left:65px; }
     #gate4 { left:85px; }
+    #gate2_0 { left:10px; }
+    #gate2_1 { left:40px; }
+    #gate2_2 { left:70px; }
+    #gate2_3 { left:100px; }
+    #gate2_4 { left:130px; }
     .flow { position:absolute; bottom:-20px; width:15px; height:20px; background:rgba(0, 170, 255, 0.6); display:none; }
+    .flow2 { position:absolute; bottom:-30px; width:20px; height:30px; background:rgba(0,170,255,0.6); display:none; }
     #water { position:absolute; bottom:0; left:0; width:100%; background:rgba(0,0,255,0.4); }
+    #water2 { position:absolute; bottom:0; left:0; width:100%; background:rgba(0,0,255,0.4); }
     #city { position:absolute; bottom:0; left:0; width:100%; height:100px; background:#777; opacity:0.9; }
     .house { position:absolute; bottom:10px; width:20px; height:20px; background:#eee; border:1px solid #333; }
     #flood { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,255,0.3); display:none; }
@@ -66,7 +76,7 @@
     </div>
   </div>
   <div id="map" class="mb-3">
-    <div id="cam-overlay">CAMERA 1 - Presa Tramuntana <span id="cam-time"></span></div>
+    <div id="cam-overlay" class="cam-overlay">CAMERA 1 - Presa Tramuntana <span id="cam-time"></span></div>
     <div id="city">
       <div class="house" style="left:50px"></div>
       <div class="house" style="left:100px"></div>
@@ -84,6 +94,18 @@
   <div class="cam-cross"></div>
   </div>
 
+  <div id="gatecam" class="mb-3">
+    <div id="cam2-overlay" class="cam-overlay">CAMERA 2 - Compuertas</div>
+    <div id="dam2">
+      {% for g in range(state['gates']|length) %}
+      <div id="gate2_{{g}}" class="gate2"></div>
+      <div id="flow2_{{g}}" class="flow2" style="left:{{10+30*g}}px"></div>
+      {% endfor %}
+    </div>
+    <div id="water2"></div>
+    <div class="cam-cross"></div>
+  </div>
+
   <div class="row my-3">
     {% for g in range(state['gates']|length) %}
     <div class="col-md-4 text-center">
@@ -98,12 +120,14 @@
   {% if session and session['role'] in ['engineer','admin'] %}
   <div class="mb-4">
     {% for g in range(state['gates']|length) %}
-    <form action="{{ url_for('gate', gid=g, action='open') }}" method="post" class="d-inline">
-      <button class="btn btn-sm btn-danger">Abrir {{g+1}}</button>
-    </form>
-    <form action="{{ url_for('gate', gid=g, action='close') }}" method="post" class="d-inline">
-      <button class="btn btn-sm btn-primary">Cerrar {{g+1}}</button>
-    </form>
+    <div class="btn-group m-1" role="group">
+      <form action="{{ url_for('gate', gid=g, action='open') }}" method="post">
+        <button class="btn btn-sm btn-danger">Abrir {{g+1}}</button>
+      </form>
+      <form action="{{ url_for('gate', gid=g, action='close') }}" method="post">
+        <button class="btn btn-sm btn-primary">Cerrar {{g+1}}</button>
+      </form>
+    </div>
     {% endfor %}
   </div>
   {% endif %}
@@ -145,10 +169,16 @@
     const water = document.getElementById('water');
     const perc = Math.min(st.water_level / {{ MAX_LEVEL }} * 100, 150);
     water.style.height = perc + '%';
+    const water2 = document.getElementById('water2');
+    if(water2) water2.style.height = perc + '%';
     for(let i=0;i<st.gates.length;i++){
       if(st.gates[i]){
         document.getElementById('gate'+i).style.background = '#0f0';
         document.getElementById('flow'+i).style.display = 'block';
+        const g2=document.getElementById('gate2_'+i);
+        const f2=document.getElementById('flow2_'+i);
+        if(g2) g2.style.background='#0f0';
+        if(f2) f2.style.display='block';
       }
     }
     if(st.dam_broken || st.water_level > {{ MAX_LEVEL }} ){
