@@ -7,10 +7,10 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { background:#c3d9ff; font-family: Tahoma, sans-serif; }
-    .card { box-shadow: 2px 2px 4px #888; }
-    #map { position:relative; width:100%; max-width:700px; height:40vh; margin:auto; border:2px solid #666; background:#222 url('https://dummyimage.com/700x350/aaaaaa/ffffff&text=Presa'); background-size:cover; color:#0f0; }
-    #gatecam { position:relative; width:100%; max-width:500px; height:220px; margin:20px auto; border:2px solid #666; background:#000 url('https://dummyimage.com/500x220/444/fff&text=Compuertas'); background-size:cover; color:#0f0; }
+    body { background:linear-gradient(#c5def8,#e8f0ff); font-family: "Segoe UI", Tahoma, sans-serif; }
+    .card { box-shadow: 0 2px 6px rgba(0,0,0,0.2); border-radius:8px; }
+    #map { position:relative; width:100%; max-width:700px; height:40vh; margin:auto; border:2px solid #666; background:#222 url('https://dummyimage.com/700x350/777/fff&text=Presa'); background-size:cover; color:#0f0; }
+    #gatecam { position:relative; width:100%; max-width:500px; height:220px; margin:20px auto; border:2px solid #666; background:#000 url('https://dummyimage.com/500x220/555/fff&text=Compuertas'); background-size:cover; color:#0f0; }
     #map::after { content:''; position:absolute; inset:0; border:1px solid rgba(255,255,255,0.2); pointer-events:none; }
     .cam-overlay { position:absolute; top:5px; left:5px; background:rgba(0,0,0,0.5); padding:2px 4px; font-size:12px; font-family:monospace; }
     #dam { position:absolute; bottom:100px; left:250px; width:100px; height:100px; background:#555; opacity:0.8; }
@@ -130,6 +130,14 @@
   </div>
 {% if session and session['role'] in ['engineer','admin'] %}
   <div class="row" id="gate-controls">
+    <div class="col-12 mb-2 text-center">
+      <form action="{{ url_for('gates_all', action='open') }}" method="post" class="d-inline">
+        <button class="btn btn-success btn-sm">Abrir todas</button>
+      </form>
+      <form action="{{ url_for('gates_all', action='close') }}" method="post" class="d-inline ms-2">
+        <button class="btn btn-secondary btn-sm">Cerrar todas</button>
+      </form>
+    </div>
     {% for g in range(state['gates']|length) %}
     <div class="col-md-2 col-6 mb-3">
       <div class="card text-center">
@@ -222,8 +230,8 @@
         options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true}}}
       });
       charts.flow = new Chart(document.getElementById('chartFlow'),{
-        type:'line',
-        data:{labels:labels,datasets:[{label:'Caudal',data:hist.flow,borderColor:'green',backgroundColor:'rgba(0,255,0,0.1)',borderWidth:2,tension:0.3,fill:true}]},
+        type:'bar',
+        data:{labels:labels,datasets:[{label:'Caudal',data:hist.flow,backgroundColor:'rgba(0,150,0,0.6)'}]},
         options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true}}}
       });
       charts.weight = new Chart(document.getElementById('chartWeight'),{
@@ -236,8 +244,8 @@
         options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true}}}
       });
       charts.power = new Chart(document.getElementById('chartPower'),{
-        type:'line',
-        data:{labels:labels,datasets:[{label:'Potencia',data:hist.power,borderColor:'purple',backgroundColor:'rgba(128,0,128,0.1)',borderWidth:2,tension:0.3,fill:true}]},
+        type:'bar',
+        data:{labels:labels,datasets:[{label:'Potencia',data:hist.power,backgroundColor:'rgba(128,0,200,0.6)'}]},
         options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true}}}
       });
       charts.wtemp = new Chart(document.getElementById('chartWaterTemp'),{

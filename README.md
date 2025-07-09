@@ -13,7 +13,8 @@ Demo de presa hidraulica y central hidroelectrica vulnerable a deserialización.
 Al iniciar todas las compuertas están cerradas y las turbinas detenidas.
 3. Entra con `/login/<usuario>` (por ejemplo `/login/eng_jose`).
 4. Accede a `/` para visualizar el mapa de la presa. Ahora se muestran varias cámaras en cuadrícula: la vista general, las compuertas y las turbinas.
-   Puedes abrir o cerrar cada puerta si tienes rol de ingeniero o administrador. Los gráficos usan Chart.js con un estilo más moderno.
+   Puedes abrir o cerrar cada puerta si tienes rol de ingeniero o administrador. Además existen botones para abrir o cerrar todas las compuertas de una vez.
+   Los gráficos utilizan distintos tipos (líneas y barras) según la métrica para una visualización más clara.
    Las lecturas se refrescan automáticamente cada pocos segundos y difieren entre usuarios para facilitar las pruebas.
 6. Usa `/logout` para cerrar la sesión y borrar la cookie.
 
@@ -25,7 +26,7 @@ asumimos un área de 1000 m² por metro de altura, por lo que 1 m de nivel
 equivale a unas 1000 toneladas de masa de agua.
 Cuando el nivel supera los 250 m o la presión pasa de 280 bar aparece un aviso de peligro y la presa puede romperse e inundar la ciudad.
 
- Tambien se registran la temperatura del agua y de cada turbina, la velocidad de rotacion (rpm) y la energia generada por la central hidroelectrica. Cada puerta dispone de una turbina asociada.
+ Tambien se registran la temperatura del agua y de cada turbina, la velocidad de rotacion (rpm) y la energia generada por la central hidroelectrica. Cada puerta dispone de una turbina asociada. Puedes abrir o cerrar compuertas individualmente o con los botones "Abrir todas" y "Cerrar todas".
 
  Si la suma de potencia supera los 200 MW el sistema muestra un error 500 con el texto `flag{electric_power}` para simular un fallo catastrófico en la red.
 

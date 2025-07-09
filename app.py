@@ -301,6 +301,24 @@ def gate(gid, action):
     return redirect('/')
 
 
+@app.route('/gates/<action>', methods=['POST'])
+def gates_all(action):
+    """Abre o cierra todas las compuertas"""
+    raw = request.cookies.get('session')
+    if not raw:
+        return 'Sin sesion', 400
+    try:
+        session = load_cookie(raw)
+    except Exception:
+        return 'Sesion corrupta', 400
+
+    if session.get('role') not in ('engineer', 'admin'):
+        return 'Acceso denegado', 403
+
+    state['gates'] = [action == 'open'] * NUM_GATES
+    return redirect('/')
+
+
 @app.route('/state')
 def api_state():
     """Devuelve el estado actual con ruido para actualizaciones AJAX"""
