@@ -28,7 +28,12 @@
   {% else %}
   <p><a href="/login/visitante">Iniciar sesión de prueba</a></p>
   {% endif %}
-  <p>Clima actual: <strong>{{ state['weather'] }}</strong></p>
+  <div class="card mb-3 w-75 mx-auto">
+    <div class="card-body">
+      <h5 class="card-title">Estado meteorológico</h5>
+      <p class="card-text">Clima actual: <strong id="weather">{{ state['weather'] }}</strong></p>
+    </div>
+  </div>
   <div id="map" class="mb-3">
     <div id="city"></div>
     <div id="dam">
@@ -52,7 +57,20 @@
     {% endfor %}
   </div>
   {% endif %}
-  <canvas id="chart" height="80"></canvas>
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <canvas id="chartGeneral" height="80"></canvas>
+    </div>
+    <div class="col-md-6">
+      <canvas id="chartLevel" height="80"></canvas>
+    </div>
+    <div class="col-md-6">
+      <canvas id="chartPressure" height="80"></canvas>
+    </div>
+    <div class="col-md-6">
+      <canvas id="chartFlow" height="80"></canvas>
+    </div>
+  </div>
   <script>
     const st = {{ state|tojson }};
     const water = document.getElementById('water');
@@ -69,7 +87,7 @@
 
     const hist = {{ history_json|safe }};
     const labels = hist.time.map(t => new Date(t*1000).toLocaleTimeString());
-    const data = {
+    const dataGeneral = {
       labels: labels,
       datasets:[
         {label:'Nivel', data:hist.water_level, borderColor:'blue', fill:false},
@@ -77,7 +95,22 @@
         {label:'Caudal', data:hist.flow, borderColor:'green', fill:false}
       ]
     };
-    new Chart(document.getElementById('chart'), {type:'line', data});
+    new Chart(document.getElementById('chartGeneral'), {type:'line', data:dataGeneral});
+
+    new Chart(document.getElementById('chartLevel'), {
+      type:'line',
+      data:{labels:labels, datasets:[{label:'Nivel', data:hist.water_level, borderColor:'blue', fill:false}]}
+    });
+
+    new Chart(document.getElementById('chartPressure'), {
+      type:'line',
+      data:{labels:labels, datasets:[{label:'Presión', data:hist.pressure, borderColor:'red', fill:false}]}
+    });
+
+    new Chart(document.getElementById('chartFlow'), {
+      type:'line',
+      data:{labels:labels, datasets:[{label:'Caudal', data:hist.flow, borderColor:'green', fill:false}]}
+    });
     setTimeout(()=>location.reload(),10000);
   </script>
 </body>
