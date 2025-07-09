@@ -286,6 +286,53 @@ def gate(gid, action):
     return redirect('/')
 
 
+@app.route('/state')
+def api_state():
+    """Devuelve el estado actual con ruido para actualizaciones AJAX"""
+    raw = request.cookies.get('session')
+    if state['power'] > POWER_MAX:
+        abort(500)
+
+    session_state = {
+        'gates': list(state['gates']),
+        'water_level': state['water_level'] + random.uniform(-0.5, 0.5),
+        'pressure': state['pressure'] + random.uniform(-0.5, 0.5),
+        'flow': (state['flow'] + random.uniform(-0.2, 0.2)) if state['flow'] > 0 else 0.0,
+        'weather': state['weather'],
+        'temperature': state['temperature'] + random.uniform(-0.5, 0.5),
+        'wind_speed': state['wind_speed'] + random.uniform(-0.5, 0.5),
+        'dam_broken': state['dam_broken'],
+        'water_temp': state['water_temp'] + random.uniform(-0.2, 0.2),
+        'turbine_temps': [t + random.uniform(-0.5, 0.5) for t in state['turbine_temps']],
+        'turbine_rpm': [r + random.uniform(-5, 5) for r in state['turbine_rpm']],
+        'turbine_broken': list(state['turbine_broken']),
+        'rpm_avg': sum(state['turbine_rpm']) / NUM_GATES + random.uniform(-5, 5),
+        'power': state['power'] + random.uniform(-0.2, 0.2)
+    }
+
+    hist_copy = {
+        'time': list(state['history']['time']),
+        'water_level': [v + random.uniform(-0.5, 0.5) for v in state['history']['water_level']],
+        'pressure': [v + random.uniform(-0.5, 0.5) for v in state['history']['pressure']],
+        'flow': [v + random.uniform(-0.2, 0.2) if v > 0 else 0.0 for v in state['history']['flow']],
+        'temperature': [v + random.uniform(-0.5, 0.5) for v in state['history']['temperature']],
+        'wind_speed': [v + random.uniform(-0.5, 0.5) for v in state['history']['wind_speed']],
+        'water_temp': [v + random.uniform(-0.2, 0.2) for v in state['history']['water_temp']],
+        'turbine_temp': [v + random.uniform(-0.5, 0.5) for v in state['history']['turbine_temp']],
+        'power': [v + random.uniform(-0.2, 0.2) for v in state['history']['power']],
+        'rpm': [v + random.uniform(-5, 5) for v in state['history']['rpm']]
+    }
+    return {
+        'state': session_state,
+        'history': hist_copy,
+        'MAX_LEVEL': MAX_LEVEL,
+        'WEIGHT_WARN': WEIGHT_WARN,
+        'WEIGHT_MAX': WEIGHT_MAX,
+        'PRESSURE_WARN': PRESSURE_WARN,
+        'PRESSURE_MAX': PRESSURE_MAX,
+    }
+
+
 @app.errorhandler(500)
 def fail(e):
     return "<h1>500 Internal Server Error</h1><p>flag{electric_power}</p>", 500

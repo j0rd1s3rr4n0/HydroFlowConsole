@@ -40,7 +40,7 @@
     .cam-cross::after { left:50%; top:0; bottom:0; width:1px; }
   </style>
 </head>
-<body class="container py-3">
+<body class="container-fluid py-3">
   <h1 class="mb-3">Centro de Control - Presa de Tramuntana</h1>
   {% if session %}
   <p>Bienvenido {{ session['user'] }} ({{ session['role'] }}) - <a href="/logout">Salir</a></p>
@@ -61,14 +61,14 @@
   <div class="card mb-3 w-75 mx-auto">
     <div class="card-body">
       <h5 class="card-title"><i class="bi bi-speedometer2"></i> Lecturas actuales</h5>
-      <p class="mb-1"><i class="bi bi-water"></i> Nivel: <strong>{{ "%.2f"|format(state['water_level']) }} m</strong></p>
-      <p class="mb-1"><i class="bi bi-speedometer"></i> Presión: <strong>{{ "%.2f"|format(state['pressure']) }} bar</strong></p>
-      <p class="mb-1"><i class="bi bi-tropical-storm"></i> Caudal: <strong>{{ "%.2f"|format(state['flow']) }} m³/s</strong></p>
-      <p class="mb-1"><i class="bi bi-box"></i> Peso aprox: <strong>{{ "%.2f"|format(state['water_level']*1000) }} toneladas</strong></p>
-      <p class="mb-1"><i class="bi bi-droplet-half"></i> Temp. agua: <strong>{{ "%.1f"|format(state['water_temp']) }} °C</strong></p>
-      <p class="mb-1"><i class="bi bi-thermometer"></i> Temp. turbinas: <strong>{{ "%.1f"|format(state['turbine_temps'][0]) }} °C</strong></p>
-      <p class="mb-1"><i class="bi bi-speedometer"></i> RPM promedio: <strong>{{ "%.0f"|format(state['rpm_avg']) }} rpm</strong></p>
-      <p class="mb-1"><i class="bi bi-lightning-fill"></i> Potencia total: <strong>{{ "%.2f"|format(state['power']) }} MW</strong></p>
+      <p class="mb-1"><i class="bi bi-water"></i> Nivel: <strong id="lvl">{{ "%.2f"|format(state['water_level']) }}</strong> m</p>
+      <p class="mb-1"><i class="bi bi-speedometer"></i> Presión: <strong id="press">{{ "%.2f"|format(state['pressure']) }}</strong> bar</p>
+      <p class="mb-1"><i class="bi bi-tropical-storm"></i> Caudal: <strong id="flow">{{ "%.2f"|format(state['flow']) }}</strong> m³/s</p>
+      <p class="mb-1"><i class="bi bi-box"></i> Peso aprox: <strong id="weight">{{ "%.2f"|format(state['water_level']*1000) }}</strong> t</p>
+      <p class="mb-1"><i class="bi bi-droplet-half"></i> Temp. agua: <strong id="wtemp">{{ "%.1f"|format(state['water_temp']) }}</strong> °C</p>
+      <p class="mb-1"><i class="bi bi-thermometer"></i> Temp. turbinas: <strong id="ttemp">{{ "%.1f"|format(state['turbine_temps'][0]) }}</strong> °C</p>
+      <p class="mb-1"><i class="bi bi-speedometer"></i> RPM promedio: <strong id="rpm">{{ "%.0f"|format(state['rpm_avg']) }}</strong> rpm</p>
+      <p class="mb-1"><i class="bi bi-lightning-fill"></i> Potencia total: <strong id="power">{{ "%.2f"|format(state['power']) }}</strong> MW</p>
       {% set weight = state['water_level']*1000 %}
       {% if weight >= WEIGHT_WARN or state['pressure'] >= PRESSURE_WARN %}
       <div class="alert alert-danger mt-2">⚠️ Riesgo crítico de colapso</div>
@@ -110,27 +110,35 @@
     {% for g in range(state['gates']|length) %}
     <div class="col-md-4 text-center">
       <img src="https://dummyimage.com/200x120/333/fff&text=Turbina+{{g+1}}" class="img-fluid mb-1" alt="camara turbina {{g+1}}">
-      <div><i class="bi bi-thermometer"></i> {{ "%.1f"|format(state['turbine_temps'][g]) }} °C</div>
-      <div><i class="bi bi-speedometer"></i> {{ "%.0f"|format(state['turbine_rpm'][g]) }} rpm</div>
-      <div><i class="bi bi-lightning-fill"></i> {{ "%.1f"|format(state['turbine_rpm'][g]/1000*0.36) }} MW</div>
+      <div><i class="bi bi-thermometer"></i> <span id="turb-temp-{{g}}">{{ "%.1f"|format(state['turbine_temps'][g]) }}</span> °C</div>
+      <div><i class="bi bi-speedometer"></i> <span id="turb-rpm-{{g}}">{{ "%.0f"|format(state['turbine_rpm'][g]) }}</span> rpm</div>
+      <div><i class="bi bi-lightning-fill"></i> <span id="turb-power-{{g}}">{{ "%.1f"|format(state['turbine_rpm'][g]/1000*0.36) }}</span> MW</div>
       {% if state['turbine_broken'][g] %}<div class="text-danger">Turbina rota</div>{% endif %}
     </div>
     {% endfor %}
   </div>
-  {% if session and session['role'] in ['engineer','admin'] %}
-  <div class="mb-4">
+{% if session and session['role'] in ['engineer','admin'] %}
+  <div class="row" id="gate-controls">
     {% for g in range(state['gates']|length) %}
-    <div class="btn-group m-1" role="group">
-      <form action="{{ url_for('gate', gid=g, action='open') }}" method="post">
-        <button class="btn btn-sm btn-danger">Abrir {{g+1}}</button>
-      </form>
-      <form action="{{ url_for('gate', gid=g, action='close') }}" method="post">
-        <button class="btn btn-sm btn-primary">Cerrar {{g+1}}</button>
-      </form>
+    <div class="col-md-2 col-6 mb-3">
+      <div class="card text-center">
+        <div class="card-header">Compuerta {{g+1}}</div>
+        <div class="card-body p-2">
+          <p class="mb-2">Estado: <span id="gate-status-{{g}}">{{ 'Abierta' if state['gates'][g] else 'Cerrada' }}</span></p>
+          <div class="d-flex justify-content-center gap-1">
+            <form action="{{ url_for('gate', gid=g, action='open') }}" method="post">
+              <button class="btn btn-sm btn-danger">Abrir</button>
+            </form>
+            <form action="{{ url_for('gate', gid=g, action='close') }}" method="post">
+              <button class="btn btn-sm btn-primary">Cerrar</button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
     {% endfor %}
   </div>
-  {% endif %}
+{% endif %}
   <div class="row g-3 mb-4">
     <div class="col-md-6">
       <canvas id="chartGeneral" height="80"></canvas>
@@ -161,111 +169,149 @@
     </div>
   </div>
   <script>
-    const st = {{ state|tojson }};
+    const initialState = {{ state|tojson }};
+    const initialHist = {{ history_json|safe }};
     const weatherIcon = document.getElementById('weather-icon');
-    if(st.weather === 'lluvia fuerte') weatherIcon.classList.add('bi-cloud-lightning-rain');
-    else if(st.weather === 'lluvia') weatherIcon.classList.add('bi-cloud-rain');
-    else weatherIcon.classList.add('bi-brightness-high');
-    const water = document.getElementById('water');
-    const perc = Math.min(st.water_level / {{ MAX_LEVEL }} * 100, 150);
-    water.style.height = perc + '%';
-    const water2 = document.getElementById('water2');
-    if(water2) water2.style.height = perc + '%';
-    for(let i=0;i<st.gates.length;i++){
-      if(st.gates[i]){
-        document.getElementById('gate'+i).style.background = '#0f0';
-        document.getElementById('flow'+i).style.display = 'block';
+
+    const charts = {};
+    function createCharts(hist){
+      const labels = hist.time.map(t => new Date(t*1000).toLocaleTimeString());
+      const weight = hist.water_level.map(v=>v*1000);
+      const warnWeight = hist.time.map(()=> {{ WEIGHT_WARN }});
+      const maxWeight = hist.time.map(()=> {{ WEIGHT_MAX }});
+      const warnPressure = hist.time.map(()=> {{ PRESSURE_WARN }});
+      const maxPressure = hist.time.map(()=> {{ PRESSURE_MAX }});
+      charts.general = new Chart(document.getElementById('chartGeneral'),{type:'line',data:{labels:labels,datasets:[{label:'Nivel',data:hist.water_level,borderColor:'blue',fill:false},{label:'Presión',data:hist.pressure,borderColor:'red',fill:false},{label:'Caudal',data:hist.flow,borderColor:'green',fill:false},{label:'Peso',data:weight,borderColor:'orange',fill:false},{label:'RPM',data:hist.rpm,borderColor:'brown',fill:false}]}});
+      charts.level = new Chart(document.getElementById('chartLevel'),{type:'line',data:{labels:labels,datasets:[{label:'Nivel',data:hist.water_level,borderColor:'blue',fill:false},{label:'Aviso',data:hist.time.map(()=> {{ WEIGHT_WARN/1000 }}),borderColor:'orange',borderDash:[5,5],fill:false},{label:'Máximo',data:hist.time.map(()=> {{ WEIGHT_MAX/1000 }}),borderColor:'red',borderDash:[5,5],fill:false}]}});
+      charts.pressure = new Chart(document.getElementById('chartPressure'),{type:'line',data:{labels:labels,datasets:[{label:'Presión',data:hist.pressure,borderColor:'red',fill:false},{label:'Aviso',data:warnPressure,borderColor:'orange',borderDash:[5,5],fill:false},{label:'Máximo',data:maxPressure,borderColor:'black',borderDash:[5,5],fill:false}]}});
+      charts.flow = new Chart(document.getElementById('chartFlow'),{type:'line',data:{labels:labels,datasets:[{label:'Caudal',data:hist.flow,borderColor:'green',fill:false}]}});
+      charts.weight = new Chart(document.getElementById('chartWeight'),{type:'line',data:{labels:labels,datasets:[{label:'Peso',data:weight,borderColor:'orange',fill:false},{label:'Aviso',data:warnWeight,borderColor:'orange',borderDash:[5,5],fill:false},{label:'Máximo',data:maxWeight,borderColor:'red',borderDash:[5,5],fill:false}]}});
+      charts.power = new Chart(document.getElementById('chartPower'),{type:'line',data:{labels:labels,datasets:[{label:'Potencia',data:hist.power,borderColor:'purple',fill:false}]}});
+      charts.wtemp = new Chart(document.getElementById('chartWaterTemp'),{type:'line',data:{labels:labels,datasets:[{label:'Temp Agua',data:hist.water_temp,borderColor:'cyan',fill:false}]}});
+      charts.ttemp = new Chart(document.getElementById('chartTurbineTemp'),{type:'line',data:{labels:labels,datasets:[{label:'Temp Turbina',data:hist.turbine_temp,borderColor:'magenta',fill:false}]}});
+      charts.rpm = new Chart(document.getElementById('chartRPM'),{type:'line',data:{labels:labels,datasets:[{label:'RPM',data:hist.rpm,borderColor:'brown',fill:false}]}});
+    }
+
+    function updateCharts(hist){
+      const labels = hist.time.map(t=>new Date(t*1000).toLocaleTimeString());
+      const weight = hist.water_level.map(v=>v*1000);
+      const warnWeight = hist.time.map(()=> {{ WEIGHT_WARN }});
+      const maxWeight = hist.time.map(()=> {{ WEIGHT_MAX }});
+      const warnPressure = hist.time.map(()=> {{ PRESSURE_WARN }});
+      const maxPressure = hist.time.map(()=> {{ PRESSURE_MAX }});
+      charts.general.data.labels = labels;
+      charts.general.data.datasets[0].data = hist.water_level;
+      charts.general.data.datasets[1].data = hist.pressure;
+      charts.general.data.datasets[2].data = hist.flow;
+      charts.general.data.datasets[3].data = weight;
+      charts.general.data.datasets[4].data = hist.rpm;
+      charts.general.update();
+
+      charts.level.data.labels = labels;
+      charts.level.data.datasets[0].data = hist.water_level;
+      charts.level.data.datasets[1].data = hist.time.map(()=> {{ WEIGHT_WARN/1000 }});
+      charts.level.data.datasets[2].data = hist.time.map(()=> {{ WEIGHT_MAX/1000 }});
+      charts.level.update();
+
+      charts.pressure.data.labels = labels;
+      charts.pressure.data.datasets[0].data = hist.pressure;
+      charts.pressure.data.datasets[1].data = warnPressure;
+      charts.pressure.data.datasets[2].data = maxPressure;
+      charts.pressure.update();
+
+      charts.flow.data.labels = labels;
+      charts.flow.data.datasets[0].data = hist.flow;
+      charts.flow.update();
+
+      charts.weight.data.labels = labels;
+      charts.weight.data.datasets[0].data = weight;
+      charts.weight.data.datasets[1].data = warnWeight;
+      charts.weight.data.datasets[2].data = maxWeight;
+      charts.weight.update();
+
+      charts.power.data.labels = labels;
+      charts.power.data.datasets[0].data = hist.power;
+      charts.power.update();
+
+      charts.wtemp.data.labels = labels;
+      charts.wtemp.data.datasets[0].data = hist.water_temp;
+      charts.wtemp.update();
+
+      charts.ttemp.data.labels = labels;
+      charts.ttemp.data.datasets[0].data = hist.turbine_temp;
+      charts.ttemp.update();
+
+      charts.rpm.data.labels = labels;
+      charts.rpm.data.datasets[0].data = hist.rpm;
+      charts.rpm.update();
+    }
+
+    function applyState(st){
+      weatherIcon.className = 'bi';
+      if(st.weather === 'lluvia fuerte') weatherIcon.classList.add('bi-cloud-lightning-rain');
+      else if(st.weather === 'lluvia') weatherIcon.classList.add('bi-cloud-rain');
+      else weatherIcon.classList.add('bi-brightness-high');
+      document.getElementById('weather').textContent = st.weather;
+      document.getElementById('lvl').textContent = st.water_level.toFixed(2);
+      document.getElementById('press').textContent = st.pressure.toFixed(2);
+      document.getElementById('flow').textContent = st.flow.toFixed(2);
+      document.getElementById('weight').textContent = (st.water_level*1000).toFixed(2);
+      document.getElementById('wtemp').textContent = st.water_temp.toFixed(1);
+      document.getElementById('ttemp').textContent = st.turbine_temps[0].toFixed(1);
+      document.getElementById('rpm').textContent = st.rpm_avg.toFixed(0);
+      document.getElementById('power').textContent = st.power.toFixed(2);
+      const water = document.getElementById('water');
+      const perc = Math.min(st.water_level / {{ MAX_LEVEL }} * 100,150);
+      water.style.height = perc + '%';
+      const water2=document.getElementById('water2');
+      if(water2) water2.style.height = perc + '%';
+      for(let i=0;i<st.gates.length;i++){
+        const open=st.gates[i];
+        document.getElementById('gate-status-'+i).textContent = open?'Abierta':'Cerrada';
+        const g=document.getElementById('gate'+i);
+        const f=document.getElementById('flow'+i);
         const g2=document.getElementById('gate2_'+i);
         const f2=document.getElementById('flow2_'+i);
-        if(g2) g2.style.background='#0f0';
-        if(f2) f2.style.display='block';
+        if(open){
+          if(g) g.style.background='#0f0';
+          if(f) f.style.display='block';
+          if(g2) g2.style.background='#0f0';
+          if(f2) f2.style.display='block';
+        }else{
+          if(g) g.style.background='#333';
+          if(f) f.style.display='none';
+          if(g2) g2.style.background='#333';
+          if(f2) f2.style.display='none';
+        }
+        const ttemp=document.getElementById('turb-temp-'+i);
+        const trpm=document.getElementById('turb-rpm-'+i);
+        const tpow=document.getElementById('turb-power-'+i);
+        if(ttemp) ttemp.textContent = st.turbine_temps[i].toFixed(1);
+        if(trpm) trpm.textContent = st.turbine_rpm[i].toFixed(0);
+        if(tpow) tpow.textContent = (st.turbine_rpm[i]/1000*0.36).toFixed(1);
       }
+      if(st.dam_broken || st.water_level > {{ MAX_LEVEL }}){
+        document.getElementById('flood').style.display='block';
+      }else{
+        document.getElementById('flood').style.display='none';
+      }
+      document.getElementById('cam-time').textContent = new Date().toLocaleTimeString();
     }
-    if(st.dam_broken || st.water_level > {{ MAX_LEVEL }} ){
-      document.getElementById('flood').style.display='block';
+
+    function apply(data){
+      applyState(data.state);
+      updateCharts(data.history);
     }
 
-    const hist = {{ history_json|safe }};
-    const labels = hist.time.map(t => new Date(t*1000).toLocaleTimeString());
-    const weight = hist.water_level.map(v => v*1000);
-    const warnWeight = hist.time.map(()=> {{ WEIGHT_WARN }});
-    const maxWeight = hist.time.map(()=> {{ WEIGHT_MAX }});
-    const warnPressureLine = hist.time.map(()=> {{ PRESSURE_WARN }});
-    const maxPressureLine = hist.time.map(()=> {{ PRESSURE_MAX }});
-    const dataGeneral = {
-      labels: labels,
-      datasets:[
-        {label:'Nivel', data:hist.water_level, borderColor:'blue', fill:false},
-        {label:'Presión', data:hist.pressure, borderColor:'red', fill:false},
-        {label:'Caudal', data:hist.flow, borderColor:'green', fill:false},
-        {label:'Peso', data:weight, borderColor:'orange', fill:false},
-        {label:'RPM', data:hist.rpm, borderColor:'brown', fill:false}
-      ]
-    };
-    new Chart(document.getElementById('chartGeneral'), {type:'line', data:dataGeneral});
+    createCharts(initialHist);
+    apply({state: initialState, history: initialHist});
 
-    new Chart(document.getElementById('chartLevel'), {
-      type:'line',
-      data:{
-        labels:labels,
-        datasets:[
-          {label:'Nivel', data:hist.water_level, borderColor:'blue', fill:false},
-          {label:'Aviso', data:hist.time.map(()=> {{ WEIGHT_WARN/1000 }}), borderColor:'orange', borderDash:[5,5], fill:false},
-          {label:'Máximo', data:hist.time.map(()=> {{ WEIGHT_MAX/1000 }}), borderColor:'red', borderDash:[5,5], fill:false}
-        ]
-      }
-    });
-
-    new Chart(document.getElementById('chartPressure'), {
-      type:'line',
-      data:{
-        labels:labels,
-        datasets:[
-          {label:'Presión', data:hist.pressure, borderColor:'red', fill:false},
-          {label:'Aviso', data:warnPressureLine, borderColor:'orange', borderDash:[5,5], fill:false},
-          {label:'Máximo', data:maxPressureLine, borderColor:'black', borderDash:[5,5], fill:false}
-        ]
-      }
-    });
-
-    new Chart(document.getElementById('chartFlow'), {
-      type:'line',
-      data:{labels:labels, datasets:[{label:'Caudal', data:hist.flow, borderColor:'green', fill:false}]}
-    });
-
-    new Chart(document.getElementById('chartWeight'), {
-      type:'line',
-      data:{
-        labels:labels,
-        datasets:[
-          {label:'Peso', data:weight, borderColor:'orange', fill:false},
-          {label:'Aviso', data:warnWeight, borderColor:'orange', borderDash:[5,5], fill:false},
-          {label:'Máximo', data:maxWeight, borderColor:'red', borderDash:[5,5], fill:false}
-        ]
-      }
-    });
-
-    new Chart(document.getElementById('chartPower'), {
-      type:'line',
-      data:{labels:labels, datasets:[{label:'Potencia', data:hist.power, borderColor:'purple', fill:false}]}
-    });
-
-    new Chart(document.getElementById('chartWaterTemp'), {
-      type:'line',
-      data:{labels:labels, datasets:[{label:'Temp Agua', data:hist.water_temp, borderColor:'cyan', fill:false}]}
-    });
-
-    new Chart(document.getElementById('chartTurbineTemp'), {
-      type:'line',
-      data:{labels:labels, datasets:[{label:'Temp Turbina', data:hist.turbine_temp, borderColor:'magenta', fill:false}]}
-    });
-
-    new Chart(document.getElementById('chartRPM'), {
-      type:'line',
-      data:{labels:labels, datasets:[{label:'RPM', data:hist.rpm, borderColor:'brown', fill:false}]}
-    });
-    document.getElementById('cam-time').textContent = new Date().toLocaleTimeString();
-    setTimeout(()=>location.reload(),3000);
+    async function refresh(){
+      const r = await fetch('/state');
+      const data = await r.json();
+      apply(data);
+    }
+    setInterval(refresh, 3000);
   </script>
 </body>
 </html>
