@@ -117,6 +117,16 @@
     .waterfall.active { animation: fall 0.5s linear infinite; height:100%; }
     @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
     @keyframes fall { 0%{transform:translateY(-10%);} 100%{transform:translateY(10%);} }
+    body.broken-warning {
+      background: #330000;
+    }
+    body.broken-warning .card {
+      border-color: #ff0000;
+    }
+    body.broken-warning .alert {
+      background-color: #660000;
+      color: #fff;
+    }
   </style>
 </head>
 <body class="container-fluid py-3">
@@ -279,6 +289,8 @@
     const weatherIcon = document.getElementById('weather-icon');
 
     const charts = {};
+    let damBroken = initialState.dam_broken;
+    let shownFailure = false;
     function createCharts(hist){
       const labels = hist.time.map(t => new Date(t*1000).toLocaleTimeString());
       const weight = hist.water_weight;
@@ -479,6 +491,23 @@
         document.getElementById('flood').style.display='none';
       }
       document.getElementById('cam-time').textContent = new Date().toLocaleTimeString();
+
+      if(st.dam_broken){
+        document.body.classList.add('broken-warning');
+        if(!damBroken){
+          damBroken = true;
+          if(!shownFailure){
+            shownFailure = true;
+            setTimeout(function(){
+              alert('Reiniciando servidor...');
+              window.location = '/fail';
+            }, 100);
+          }
+        }
+      }else{
+        document.body.classList.remove('broken-warning');
+        damBroken = false;
+      }
     }
 
     function updateAlert(level, params){

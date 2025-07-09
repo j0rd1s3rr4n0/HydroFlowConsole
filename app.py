@@ -91,6 +91,8 @@ def calc_alert():
         crit.append(f"peso {state['water_weight']:.0f} t >= {WEIGHT_MAX}")
     elif state['water_weight'] >= WEIGHT_WARN:
         warn.append(f"peso {state['water_weight']:.0f} t")
+    if state['dam_broken']:
+        crit.append('presa colapsada')
 
     if crit:
         return 'critical', crit
@@ -429,6 +431,10 @@ def api_state():
         'alert_params': params
     }
 
+
+@app.route('/fail')
+def fail_route():
+    abort(500)
 
 @app.errorhandler(500)
 def fail(e):

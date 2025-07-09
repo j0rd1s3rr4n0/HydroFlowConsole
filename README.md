@@ -30,7 +30,9 @@ equivale a unas 1000 toneladas de masa de agua.
 
  Tambien se registran la temperatura del agua y de cada turbina, la velocidad de rotacion (rpm) y la energia generada por la central hidroelectrica. Cada puerta dispone de una turbina asociada. Puedes abrir o cerrar compuertas individualmente o con los botones "Abrir todas" y "Cerrar todas".
 
- Si la suma de potencia supera los 200 MW el sistema muestra un error 500 con el texto `flag{electric_power}` para simular un fallo catastrófico en la red.
+Si la suma de potencia supera los 200 MW el sistema muestra un error 500 con el texto `flag{electric_power}` para simular un fallo catastrófico en la red.
+
+Cuando la presión supera los 100 bar o el nivel máximo se mantiene durante más de un minuto, la presa colapsa. En ese caso todas las tarjetas se vuelven rojas, se muestra un mensaje de «Reiniciando servidor…» y el usuario es redirigido a la página de error 500 donde aparece la misma bandera.
 
 La interfaz combina Bootstrap con un tema oscuro y paneles translúcidos para un aspecto más moderno.
 
