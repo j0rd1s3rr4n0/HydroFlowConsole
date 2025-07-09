@@ -18,6 +18,7 @@ Al iniciar todas las compuertas están cerradas y las turbinas detenidas.
 6. Usa `/logout` para cerrar la sesión y borrar la cookie.
 
 El tablero muestra en todo momento nivel de agua, presión y caudal. Si todas las puertas están cerradas el caudal es cero. Cada compuerta tiene una turbina asociada que comienza a girar al abrirse y su velocidad depende de la presión del agua.
+Las turbinas solo arrancan cuando el caudal total supera los 2 m³/s y nunca giran a menos de 2000 rpm. Si están paradas se mantienen a la temperatura ambiental menos tres grados. Cuando están girando su temperatura se incrementa un grado por cada 1000 rpm y la potencia generada es de 0,36 MW por cada 1000 rpm. Sin rpm no se produce energía.
 Cuando el nivel supera los 250 m o la presión pasa de 280 bar aparece un aviso de peligro y la presa puede romperse e inundar la ciudad.
 
  Tambien se registran la temperatura del agua y de cada turbina, la velocidad de rotacion (rpm) y la energia generada por la central hidroelectrica. Cada puerta dispone de una turbina asociada.

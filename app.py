@@ -17,8 +17,9 @@ WEIGHT_WARN = 60000.0
 WEIGHT_MAX = 80000.0
 PRESSURE_WARN = WEIGHT_WARN / 1000 * 1.12  # bar equivalentes
 PRESSURE_MAX = WEIGHT_MAX / 1000 * 1.12
-RPM_WARN = 1200.0
-RPM_MAX = 1500.0
+RPM_MIN = 2000.0
+RPM_WARN = 4500.0
+RPM_MAX = 5000.0
 POWER_MAX = 200.0
 state = {
     'gates': [False] * NUM_GATES,  # False = cerrada
@@ -90,27 +91,33 @@ def update_state():
         state['water_temp'] += random.uniform(-0.1, 0.1)
         state['water_temp'] = max(4, min(state['water_temp'], 30))
 
-        # actualiza temperatura y rpm de cada turbina dependiendo del flujo
+        # calcula el numero de compuertas abiertas para estimar el caudal total
+        open_count = sum(state['gates'])
         total_power = 0.0
         for i, open_ in enumerate(state['gates']):
-            if open_ and not state['dam_broken'] and not state['turbine_broken'][i]:
-                # la turbina se calienta ligeramente y gira en proporcion a la
-                # presion ejercida por el agua que pasa por su compuerta
-                state['turbine_temps'][i] += 0.3
-                target_rpm = state['pressure'] * 8
-                state['turbine_rpm'][i] += (target_rpm - state['turbine_rpm'][i]) * 0.1
+            running = (
+                open_ and not state['dam_broken'] and not state['turbine_broken'][i]
+                and open_count > 2
+            )
+            if running:
+                # rpm minima de funcionamiento y crecimiento segun presion
+                target_rpm = max(state['pressure'] * 8, RPM_MIN)
+                state['turbine_rpm'][i] += (target_rpm - state['turbine_rpm'][i]) * 0.2
             else:
-                # se enfria y reduce rpm hacia cero o no hay suficiente caudal
-                state['turbine_temps'][i] += (state['water_temp'] - state['turbine_temps'][i]) * 0.1
-                state['turbine_rpm'][i] *= 0.9
+                state['turbine_rpm'][i] = 0.0
 
-            state['turbine_temps'][i] = max(state['water_temp'], min(state['turbine_temps'][i], 90))
+            base_temp = state['temperature'] - 3
+            if state['turbine_rpm'][i] > 0:
+                state['turbine_temps'][i] = base_temp + state['turbine_rpm'][i] / 1000.0
+            else:
+                state['turbine_temps'][i] = base_temp
+
             if state['turbine_rpm'][i] > RPM_MAX:
                 state['turbine_broken'][i] = True
-                state['turbine_rpm'][i] = 0
+                state['turbine_rpm'][i] = 0.0
 
-            if not state['turbine_broken'][i] and open_:
-                total_power += state['turbine_rpm'][i] * 0.05
+            if not state['turbine_broken'][i] and state['turbine_rpm'][i] > 0:
+                total_power += (state['turbine_rpm'][i] / 1000.0) * 0.36
 
         if state['dam_broken']:
             # tras la rotura, el agua sale sin control pero sin generacion
@@ -127,7 +134,7 @@ def update_state():
             else:
                 inflow = base_inflow
 
-            outflow = sum(state['gates']) * 1.0
+            outflow = open_count * 1.0
             state['water_level'] += inflow - outflow
             state['water_level'] = max(state['water_level'], 0)
             state['flow'] = outflow

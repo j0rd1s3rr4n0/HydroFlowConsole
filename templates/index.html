@@ -112,7 +112,7 @@
       <img src="https://dummyimage.com/200x120/333/fff&text=Turbina+{{g+1}}" class="img-fluid mb-1" alt="camara turbina {{g+1}}">
       <div><i class="bi bi-thermometer"></i> {{ "%.1f"|format(state['turbine_temps'][g]) }} °C</div>
       <div><i class="bi bi-speedometer"></i> {{ "%.0f"|format(state['turbine_rpm'][g]) }} rpm</div>
-      <div><i class="bi bi-lightning-fill"></i> {{ "%.1f"|format(state['turbine_rpm'][g]*0.05) }} MW</div>
+      <div><i class="bi bi-lightning-fill"></i> {{ "%.1f"|format(state['turbine_rpm'][g]/1000*0.36) }} MW</div>
       {% if state['turbine_broken'][g] %}<div class="text-danger">Turbina rota</div>{% endif %}
     </div>
     {% endfor %}
