@@ -20,6 +20,8 @@
       border: 1px solid rgba(255,255,255,0.1);
       backdrop-filter: blur(4px);
     }
+    .weather-card{font-size:1.2rem;}
+    .weather-card .temp{font-size:1.6rem;font-weight:600;}
     #map {
       position: relative;
       width: 100%;
@@ -126,23 +128,25 @@
   </style>
 </head>
 <body class="container-fluid py-3">
-  <h1 class="mb-4 fw-semibold text-center" style="letter-spacing:1px;">Centro de Control - Presa de Tramuntana</h1>
-  {% if session %}
-  <p>Bienvenido {{ session['user'] }} ({{ session['role'] }}) - <a href="/logout">Salir</a></p>
-  {% else %}
-  <p><a href="/login/visitante">Iniciar sesión de prueba</a></p>
-  {% endif %}
+  <nav class="navbar navbar-dark bg-dark mb-4 px-3 rounded">
+    <span class="navbar-brand mb-0 h1">HydroConsole - Presa de Tramuntana</span>
+    <div class="d-flex align-items-center ms-auto">
+    {% if session %}
+      <span class="me-3 text-light">{{ session['user'] }} ({{ session['role'] }})</span>
+      <a class="btn btn-outline-light btn-sm" href="/logout">Salir</a>
+    {% else %}
+      <a class="btn btn-outline-light btn-sm" href="/login/visitante">Iniciar sesión</a>
+    {% endif %}
+    </div>
+  </nav>
   <div class="row mb-3 gx-3">
     <div class="col-lg-6">
-      <div class="card h-100 text-light" style="background:rgba(90,140,255,0.2); border-color:#5dafff;">
-        <div class="card-body">
-          <h5 class="card-title">Estado meteorológico</h5>
-          <p class="card-text">
-            <i class="bi" id="weather-icon"></i>
-            <span id="weather">{{ state['weather'] }}</span> -
-            <i class="bi bi-thermometer-half"></i> {{ "%.1f"|format(state['temperature']) }} °C -
-            <i class="bi bi-wind"></i> {{ "%.1f"|format(state['wind_speed']) }} km/h
-          </p>
+      <div class="card weather-card h-100 text-light" style="background:rgba(90,140,255,0.2); border-color:#5dafff;">
+        <div class="card-body d-flex flex-column align-items-center justify-content-center">
+          <div class="temp mb-2"><i class="bi" id="weather-icon"></i> <span id="weather">{{ state['weather'] }}</span></div>
+          <div><i class="bi bi-thermometer-half"></i> <span id="temp">{{ "%.1f"|format(state['temperature']) }}</span> °C</div>
+          <div><i class="bi bi-droplet-half"></i> Humedad: <span id="hum">{{ "%.0f"|format(state['humidity']) }}</span>%</div>
+          <div><i class="bi bi-wind"></i> <span id="wind">{{ "%.1f"|format(state['wind_speed']) }}</span> km/h</div>
         </div>
       </div>
     </div>
@@ -424,6 +428,9 @@
       else if(st.weather === 'lluvia') weatherIcon.classList.add('bi-cloud-rain');
       else weatherIcon.classList.add('bi-brightness-high');
       document.getElementById('weather').textContent = st.weather;
+      document.getElementById('temp').textContent = st.temperature.toFixed(1);
+      document.getElementById('wind').textContent = st.wind_speed.toFixed(1);
+      document.getElementById('hum').textContent = st.humidity.toFixed(0);
       document.getElementById('lvl').textContent = st.water_level.toFixed(2);
       document.getElementById('press').textContent = st.pressure.toFixed(2);
       document.getElementById('flow').textContent = st.flow.toFixed(2);

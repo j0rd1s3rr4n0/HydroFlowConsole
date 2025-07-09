@@ -95,4 +95,8 @@ El tablero emplea Bootstrap para organizar tarjetas translúcidas con los valore
 
 Los datos se actualizan cada pocos segundos y cada visitante ve pequeñas variaciones aleatorias para probar la interfaz.
 
+La cabecera muestra ahora un pequeño menú oscuro con el usuario conectado y un botón de salida. El bloque de
+"Estado meteorológico" se ha ampliado para incluir la humedad relativa y se presenta con un tamaño mayor para destacar
+el tiempo, la temperatura, el viento y la humedad actuales.
+
 HydroConsole pretende ser un ejemplo didáctico de simulación y de vulnerabilidades de deserialización, a la vez que ofrece un modelo de cálculo con un mínimo de realismo físico.

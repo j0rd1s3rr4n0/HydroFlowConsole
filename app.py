@@ -33,6 +33,7 @@ state = {
     'weather': 'soleado',
     'temperature': 20.0,      # grados C
     'wind_speed': 5.0,        # km/h (simple aproximacion)
+    'humidity': 50.0,         # % de humedad relativa
     'water_temp': 15.0,       # temperatura del agua
     'turbine_temps': [20.0] * NUM_GATES,
     'turbine_rpm': [0.0] * NUM_GATES,
@@ -51,6 +52,7 @@ state = {
         'flow': [],
         'temperature': [],
         'wind_speed': [],
+        'humidity': [],
         'water_temp': [],
         'turbine_temp': [],
         'power': [],
@@ -82,6 +84,7 @@ def zero_state():
     state['flow'] = 0.0
     state['temperature'] = 0.0
     state['wind_speed'] = 0.0
+    state['humidity'] = 0.0
     state['water_temp'] = 0.0
     state['turbine_temps'] = [0.0] * NUM_GATES
     state['turbine_rpm'] = [0.0] * NUM_GATES
@@ -160,18 +163,22 @@ def update_state():
             else:
                 state['weather'] = 'soleado'
 
-        # actualiza temperatura y viento de forma simple segun el clima
+        # actualiza temperatura, viento y humedad segun el clima
         if state['weather'] == 'lluvia fuerte':
             state['temperature'] += random.uniform(-0.4, 0.2) - 1
             state['wind_speed'] += random.uniform(1, 3)
+            state['humidity'] += random.uniform(5, 10)
         elif state['weather'] == 'lluvia':
             state['temperature'] += random.uniform(-0.3, 0.3) - 0.5
             state['wind_speed'] += random.uniform(-0.5, 1)
+            state['humidity'] += random.uniform(3, 6)
         else:
             state['temperature'] += random.uniform(-0.2, 0.5)
             state['wind_speed'] += random.uniform(-0.5, 0.5)
+            state['humidity'] += random.uniform(-3, -1)
         state['temperature'] = max(5, min(state['temperature'], 35))
         state['wind_speed'] = max(0, min(state['wind_speed'], 40))
+        state['humidity'] = max(20, min(state['humidity'], 100))
 
         # temperatura del agua se ajusta lentamente hacia la ambiental
         state['water_temp'] += (state['temperature'] - state['water_temp']) * 0.05
@@ -258,6 +265,7 @@ def update_state():
         state['history']['flow'].append(state['flow'])
         state['history']['temperature'].append(state['temperature'])
         state['history']['wind_speed'].append(state['wind_speed'])
+        state['history']['humidity'].append(state['humidity'])
         state['history']['water_temp'].append(state['water_temp'])
         state['history']['water_weight'].append(state['water_weight'])
         state['history']['water_volume'].append(state['water_volume'])
@@ -329,6 +337,7 @@ def index():
         'weather': state['weather'],
         'temperature': state['temperature'] + random.uniform(-0.5, 0.5),
         'wind_speed': state['wind_speed'] + random.uniform(-0.5, 0.5),
+        'humidity': state['humidity'] + random.uniform(-1, 1),
         'dam_broken': state['dam_broken'],
         'water_temp': state['water_temp'] + random.uniform(-0.2, 0.2),
         'water_weight': state['water_weight'] + random.uniform(-50, 50),
@@ -349,6 +358,7 @@ def index():
         'flow': [v + random.uniform(-0.2, 0.2) if v > 0 else 0.0 for v in state['history']['flow']],
         'temperature': [v + random.uniform(-0.5,0.5) for v in state['history']['temperature']],
         'wind_speed': [v + random.uniform(-0.5,0.5) for v in state['history']['wind_speed']],
+        'humidity': [v + random.uniform(-1,1) for v in state['history']['humidity']],
         'water_temp': [v + random.uniform(-0.2,0.2) for v in state['history']['water_temp']],
         'water_weight': [v + random.uniform(-50,50) for v in state['history']['water_weight']],
         'water_volume': [v + random.uniform(-50,50) for v in state['history']['water_volume']],
@@ -426,6 +436,7 @@ def api_state():
         'weather': state['weather'],
         'temperature': state['temperature'] + random.uniform(-0.5, 0.5),
         'wind_speed': state['wind_speed'] + random.uniform(-0.5, 0.5),
+        'humidity': state['humidity'] + random.uniform(-1, 1),
         'dam_broken': state['dam_broken'],
         'water_temp': state['water_temp'] + random.uniform(-0.2, 0.2),
         'water_weight': state['water_weight'] + random.uniform(-50, 50),
@@ -445,6 +456,7 @@ def api_state():
         'flow': [v + random.uniform(-0.2, 0.2) if v > 0 else 0.0 for v in state['history']['flow']],
         'temperature': [v + random.uniform(-0.5, 0.5) for v in state['history']['temperature']],
         'wind_speed': [v + random.uniform(-0.5, 0.5) for v in state['history']['wind_speed']],
+        'humidity': [v + random.uniform(-1, 1) for v in state['history']['humidity']],
         'water_temp': [v + random.uniform(-0.2, 0.2) for v in state['history']['water_temp']],
         'water_weight': [v + random.uniform(-50, 50) for v in state['history']['water_weight']],
         'water_volume': [v + random.uniform(-50, 50) for v in state['history']['water_volume']],
@@ -462,6 +474,7 @@ def api_state():
         'WEIGHT_MAX': WEIGHT_MAX,
         'PRESSURE_WARN': PRESSURE_WARN,
         'PRESSURE_MAX': PRESSURE_MAX,
+        'humidity': session_state['humidity'],
         'water_weight': session_state['water_weight'],
         'water_volume': session_state['water_volume'],
         'water_liters': session_state['water_liters'],
