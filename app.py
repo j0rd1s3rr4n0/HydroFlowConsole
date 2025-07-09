@@ -476,8 +476,8 @@ def fail_route():
 
 @app.errorhandler(500)
 def fail(e):
-    """Mostrar una página de error simple con la flag"""
-    return "<h1>500</h1><p>flag{electric_power}</p>", 500
+    """Mostrar una página de error con algo más de detalle y la flag."""
+    return render_template('error.html', flag='flag{electric_power}'), 500
 
 
 if __name__ == '__main__':
