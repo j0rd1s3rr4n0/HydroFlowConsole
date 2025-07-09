@@ -93,7 +93,6 @@ def update_state():
 
         # calcula el numero de compuertas abiertas para estimar el caudal total
         open_count = sum(state['gates'])
-        total_power = 0.0
         for i, open_ in enumerate(state['gates']):
             running = (
                 open_ and not state['dam_broken'] and not state['turbine_broken'][i]
@@ -116,8 +115,7 @@ def update_state():
                 state['turbine_broken'][i] = True
                 state['turbine_rpm'][i] = 0.0
 
-            if not state['turbine_broken'][i] and state['turbine_rpm'][i] > 0:
-                total_power += (state['turbine_rpm'][i] / 1000.0) * 0.36
+            # la potencia final se calcula aparte usando caudal y altura
 
         if state['dam_broken']:
             # tras la rotura, el agua sale sin control pero sin generacion
@@ -139,7 +137,8 @@ def update_state():
             state['water_level'] = max(state['water_level'], 0)
             state['flow'] = outflow
             state['pressure'] = state['water_level'] * 1.12
-            state['power'] = total_power
+            # potencia total segun formula P = rho*g*Q*H (en MW)
+            state['power'] = 1000 * 9.81 * state['flow'] * state['water_level'] / 1_000_000
             if state['pressure'] >= 280:
                 state['dam_broken'] = True
 

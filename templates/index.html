@@ -118,7 +118,7 @@
       <img src="https://dummyimage.com/200x120/333/fff&text=Turbina+{{g+1}}" class="img-fluid mb-1" alt="camara turbina {{g+1}}">
       <div><i class="bi bi-thermometer"></i> <span id="turb-temp-{{g}}">{{ "%.1f"|format(state['turbine_temps'][g]) }}</span> °C</div>
       <div><i class="bi bi-speedometer"></i> <span id="turb-rpm-{{g}}">{{ "%.0f"|format(state['turbine_rpm'][g]) }}</span> rpm</div>
-      <div><i class="bi bi-lightning-fill"></i> <span id="turb-power-{{g}}">{{ "%.1f"|format(state['turbine_rpm'][g]/1000*0.36) }}</span> MW</div>
+      <div><i class="bi bi-lightning-fill"></i> <span id="turb-power-{{g}}">{{ "%.1f"|format((state['water_level']*0.00981) if state['gates'][g] else 0.0) }}</span> MW</div>
       {% if state['turbine_broken'][g] %}<div class="text-danger">Turbina rota</div>{% endif %}
     </div>
     {% endfor %}
@@ -294,7 +294,10 @@
         const tpow=document.getElementById('turb-power-'+i);
         if(ttemp) ttemp.textContent = st.turbine_temps[i].toFixed(1);
         if(trpm) trpm.textContent = st.turbine_rpm[i].toFixed(0);
-        if(tpow) tpow.textContent = (st.turbine_rpm[i]/1000*0.36).toFixed(1);
+        if(tpow){
+          const p = st.gates[i] ? 0.00981 * st.water_level : 0;
+          tpow.textContent = p.toFixed(1);
+        }
       }
       if(st.dam_broken || st.water_level > {{ MAX_LEVEL }}){
         document.getElementById('flood').style.display='block';
