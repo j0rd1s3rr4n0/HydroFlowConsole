@@ -527,7 +527,8 @@ def landing():
     conn = sqlite3.connect(DB_PATH)
     team_members = conn.execute('SELECT fullname, username, role FROM team').fetchall()
     conn.close()
-    return render_template('landing.html', team_members=team_members)
+    iframe_src = request.url_root + 'login/l.perez'
+    return render_template('landing.html', team_members=team_members, iframe_src=iframe_src)
 
 
 @app.route('/gate/<int:gid>/<action>', methods=['POST'])
