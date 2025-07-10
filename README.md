@@ -1,6 +1,6 @@
 # HydroFlow Console
 
-HydroFlow Console es un simulador sencillo de la Central Hidráulica Sierra Azul. Sirve para recrear, con un enfoque didáctico, cómo sería el panel de control de una planta hidroeléctrica y a la vez exponer una vulnerabilidad de deserialización.
+HydroFlow Console es un simulador sencillo de la Central Hidráulica Sierra Azul. Sirve para recrear, con un enfoque didáctico, cómo sería el panel de control de una planta hidroeléctrica.
 
 ## Instalación y puesta en marcha
 1. Instala las dependencias:
@@ -11,10 +11,13 @@ HydroFlow Console es un simulador sencillo de la Central Hidráulica Sierra Azul
    ```bash
    python app.py
    ```
-3. Accede a `/login` e introduce un nombre de usuario para obtener una cookie de sesión insegura.
+3. Accede a `/login` e introduce un nombre de usuario para obtener la cookie de sesión.
 4. Abre el panel visitando `/dashboard`.
 5. Cierra sesión con `/logout`.
-6. La ruta `/` muestra una sencilla página de bienvenida.
+6. La ruta `/` muestra una página de bienvenida con la lista del equipo.
+
+## Autenticación
+El formulario de `/login` pide el nombre de usuario. Si existe en la base de datos, se crea una cookie `session` con el nombre y el rol. Esta cookie se lee en `/dashboard` para otorgar acceso según el rol recuperado.
 
 ## Estructura general
 - **app.py** contiene toda la lógica Flask y la simulación física.
@@ -86,10 +89,10 @@ Siendo `ρ` la densidad del agua, `g` la gravedad, `Q` el caudal total y `H` la 
 
 Ante cualquiera de estas situaciones se activa `SYSTEM_FAILED`. Todas las variables se ponen a cero y cualquier acceso al panel muestra una página de error 500 con la bandera `flag{electric_power}`.
 
-## Vulnerabilidad de deserialización
-El endpoint `/login` (o `/login/&lt;user&gt;`) genera una cookie `session` sin firma que contiene un diccionario serializado con `pickle` y codificado en base64. La cookie almacena el nombre de usuario y su rol (`viewer`, `engineer` o `admin`).
+## Cookies de sesión
+El endpoint `/login` (o `/login/&lt;user&gt;`) genera una cookie `session` que contiene un diccionario serializado con `pickle` y codificado en base64. La cookie almacena el nombre de usuario y su rol (`viewer`, `engineer` o `admin`).
 
-Al visitar `/dashboard`, la aplicación decodifica dicha cookie y ejecuta `pickle.loads()`. No hay ninguna verificación, por lo que es posible modificar la cookie para ejecutar código arbitrario en el servidor al deserializar.
+Al visitar `/dashboard`, la aplicación decodifica la cookie con `pickle.loads()` para obtener la información de la sesión.
 
 ## Interfaz
 El tablero emplea Bootstrap para organizar tarjetas translúcidas con los valores actuales. Unos gráficos de Chart.js muestran la evolución del nivel del agua, la presión, el caudal, la temperatura y la potencia. Dependiendo del rol, aparecen botones para abrir o cerrar compuertas individualmente o todas a la vez.

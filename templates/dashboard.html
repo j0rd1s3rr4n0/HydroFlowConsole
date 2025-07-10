@@ -132,7 +132,7 @@
     <span class="navbar-brand mb-0 h1">HydroFlow Console - Central Sierra Azul</span>
     <div class="d-flex align-items-center ms-auto">
     {% if session %}
-      <span class="me-3 text-light">{{ session['user'] }} ({{ session['role'] }})</span>
+      <span class="me-3 text-light">{{ session['username'] }} ({{ session['role'] }})</span>
       {% if session['role']=='admin' %}
       <a class="btn btn-outline-warning btn-sm me-2" href="/firmware/update">Firmware</a>
       {% endif %}
@@ -142,6 +142,9 @@
     {% endif %}
     </div>
   </nav>
+  {% if role_msg %}
+  <div class="alert alert-info text-center mt-2">{{ role_msg }}</div>
+  {% endif %}
   <div class="row mb-3 gx-3">
     <div class="col-lg-6">
       <div class="card weather-card h-100 text-light" style="background:rgba(90,140,255,0.2); border-color:#5dafff;">

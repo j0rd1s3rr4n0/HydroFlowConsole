@@ -6,6 +6,7 @@ import random
 from threading import Thread
 from flask import Flask, request, make_response, redirect, render_template, abort
 import os
+import sqlite3
 
 app = Flask(__name__)
 
@@ -42,6 +43,27 @@ CLIENTS = [
     ('HydroBuy', 1.05),
     ('EcoWatt', 1.00)
 ]
+
+# --- base de datos de usuarios ---
+DB_PATH = 'data.db'
+
+def init_db():
+    """Crea la base de datos con la tabla team y datos iniciales."""
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute(
+        'CREATE TABLE IF NOT EXISTS team (id INTEGER PRIMARY KEY, fullname TEXT, username TEXT UNIQUE, role TEXT)'
+    )
+    cur.execute('SELECT COUNT(*) FROM team')
+    if cur.fetchone()[0] == 0:
+        members = [
+            (1, 'Juan Eduardo', 'j.eduardo', 'engineer'),
+            (2, 'Laura Pérez', 'l.perez', 'supervisor'),
+            (3, 'Carlos López', 'c.lopez', 'admin')
+        ]
+        cur.executemany('INSERT INTO team VALUES (?,?,?,?)', members)
+    conn.commit()
+    conn.close()
 state = {
     'gates': [False] * NUM_GATES,  # False = cerrada
     'water_level': 50.0,           # metros
@@ -361,7 +383,7 @@ def create_cookie(user: str) -> str:
         role = 'visitor'
     else:
         role = 'viewer'
-    data = {'user': user, 'role': role}
+    data = {'username': user, 'role': role}
     return base64.b64encode(pickle.dumps(data)).decode()
 
 
@@ -378,19 +400,20 @@ def login_legacy(user):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login_page():
-    """Formulario de acceso para obtener la cookie insegura"""
-    if request.method == 'GET' and request.args.get('user') == 'visitor':
-        # acceso rapido para el rol visitante
-        cookie = create_cookie('visitor')
-        resp = make_response(redirect('/dashboard'))
-        resp.set_cookie('session', cookie)
-        return resp
+    """Formulario de autenticaci\u00f3n mediante nombre de usuario."""
     if request.method == 'POST':
-        user = request.form.get('user', 'visitante')
-        cookie = create_cookie(user)
-        resp = make_response(redirect('/dashboard'))
-        resp.set_cookie('session', cookie)
-        return resp
+        username = request.form.get('username')
+        conn = sqlite3.connect(DB_PATH)
+        cur = conn.cursor()
+        row = cur.execute('SELECT username, role FROM team WHERE username=?', (username,)).fetchone()
+        conn.close()
+        if row:
+            data = {'username': row[0], 'role': row[1]}
+            cookie = base64.b64encode(pickle.dumps(data)).decode()
+            resp = make_response(redirect('/dashboard'))
+            resp.set_cookie('session', cookie)
+            return resp
+        return 'Usuario no encontrado', 404
     return render_template('login.html')
 
 
@@ -407,11 +430,19 @@ def dashboard():
     """Muestra el tablero principal con vista de la ciudad y la presa"""
     raw = request.cookies.get('session')
     if not raw:
-        return 'Cookie de sesi\xc3\xb3n ausente', 400
+        return redirect('/login')
     try:
         session = load_cookie(raw)
     except Exception:
-        return 'Cookie inv\xc3\xa1lida', 400
+        return redirect('/login')
+
+    role = session.get('role')
+    if role == 'admin':
+        role_msg = 'Acceso completo.'
+    elif role in ('engineer', 'supervisor'):
+        role_msg = 'Acceso limitado seg\u00fan rol.'
+    else:
+        role_msg = 'Rol no reconocido.'
 
 
     # copia del estado con ruido para que cada cliente vea valores ligeramente
@@ -467,14 +498,17 @@ def dashboard():
         history_json=hist_json, MAX_LEVEL=MAX_LEVEL,
         WEIGHT_WARN=WEIGHT_WARN, WEIGHT_MAX=WEIGHT_MAX,
         PRESSURE_WARN=PRESSURE_WARN, PRESSURE_MAX=PRESSURE_MAX,
-        alert_level=level, alert_params=params
+        alert_level=level, alert_params=params, role_msg=role_msg
     )
 
 # --- interfaz principal ---
 @app.route('/')
 def landing():
-    """Página de inicio sencilla de la presa"""
-    return render_template('landing.html')
+    """Página principal con información del equipo."""
+    conn = sqlite3.connect(DB_PATH)
+    team_members = conn.execute('SELECT fullname, username, role FROM team').fetchall()
+    conn.close()
+    return render_template('landing.html', team_members=team_members)
 
 
 @app.route('/gate/<int:gid>/<action>', methods=['POST'])
@@ -663,5 +697,6 @@ def fail(e):
 
 
 if __name__ == '__main__':
+    init_db()
     Thread(target=update_state, daemon=True).start()
     app.run(debug=True, host='0.0.0.0')

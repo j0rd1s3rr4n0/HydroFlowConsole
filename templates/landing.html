@@ -65,6 +65,15 @@
   <a href="#demo" class="btn">Explorar la demo</a>
 </section>
 
+<section id="team" class="container py-4">
+  <h2>Equipo de HydroConsole:</h2>
+  <ul>
+    {% for full, user, role in team_members %}
+    <li>{{ full }} (@{{ user }}) - {{ role|capitalize }}</li>
+    {% endfor %}
+  </ul>
+</section>
+
 <section id="quees">
   <div class="container grid">
     <img src="{{ url_for('static', filename='assets/panel.svg') }}" alt="Panel">
