@@ -106,5 +106,11 @@ Al iniciar la aplicación el autopilot está **activo** y va abriendo o cerrando
 
 Los administradores disponen en el menú superior de un enlace directo a la página de actualización de firmware para activar o desactivar esta función en caliente.
 
-Para facilitar las pruebas se incluyen dos archivos de ejemplo en `firmware_uploads/` (`autopilot_on.bin` y `autopilot_off.bin`). Ambos contienen también `warnings: on`. Cualquier firmware subido se guardará como `firmware7331.bin`.
-Estos archivos son meramente de texto plano y sirven como base mínima de firmware para la simulación.
+Para facilitar las pruebas se incluye un archivo de ejemplo `firmware7331.bin` dentro de `firmware_uploads/`. Este fichero contiene:
+
+```
+autopilot: on
+warnings: on
+```
+
+Cualquier firmware nuevo que se suba sobrescribirá dicho archivo.

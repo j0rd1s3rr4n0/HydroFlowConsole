@@ -613,9 +613,12 @@ def firmware_download():
     filename = 'firmware7331.bin'
     path = os.path.join('firmware_uploads', filename)
     if not os.path.exists(path):
-        # si no se ha subido nada aún, usa un ejemplo según el estado actual
-        path = os.path.join('firmware_uploads', 'autopilot_on.bin' if autopilot_enabled else 'autopilot_off.bin')
-    return (open(path, 'rb').read(), 200, {
+        os.makedirs('firmware_uploads', exist_ok=True)
+        data = f"autopilot: {'on' if autopilot_enabled else 'off'}\nwarnings: {'on' if warnings_enabled else 'off'}\n".encode()
+    else:
+        with open(path, 'rb') as f:
+            data = f.read()
+    return (data, 200, {
         'Content-Type': 'application/octet-stream',
         'Content-Disposition': f'attachment; filename={filename}'
     })
