@@ -100,3 +100,14 @@ La cabecera muestra ahora un pequeño menú oscuro con el usuario conectado y un
 el tiempo, la temperatura, el viento y la humedad actuales.
 
 HydroConsole pretende ser un ejemplo didáctico de simulación y de vulnerabilidades de deserialización, a la vez que ofrece un modelo de cálculo con un mínimo de realismo físico.
+## Firmware y autopilot
+El endpoint `/firmware/update` permite subir archivos `.bin` que se leen como texto. Si el fichero contiene `autopilot: on` la lógica de autopiloto se activa y ajusta automáticamente el caudal y la apertura de compuertas. Si contiene `autopilot: off` se desactiva el modo.
+
+Para facilitar las pruebas se incluyen dos archivos de ejemplo en `firmware_uploads/`:
+
+```
+autopilot_on.bin  - activa el autopilot
+autopilot_off.bin - desactiva el autopilot
+```
+
+Estos archivos son meramente de texto plano y sirven como base mínima de firmware para la simulación.
