@@ -36,6 +36,12 @@ PRICE_TABLE = [
     0.1869, 0.1833, 0.1191, 0.1193, 0.1188, 0.1205,
     0.1990, 0.2179, 0.2329, 0.2729, 0.2277, 0.1819
 ]
+CLIENTS = [
+    ('EnerCo', 1.02),
+    ('GreenGrid', 0.98),
+    ('HydroBuy', 1.05),
+    ('EcoWatt', 1.00)
+]
 state = {
     'gates': [False] * NUM_GATES,  # False = cerrada
     'water_level': 50.0,           # metros
@@ -56,6 +62,7 @@ state = {
     'price_eur': 0.0,         # €/kWh actual
     'revenue_total': 0.0,     # ganancias acumuladas en €
     'revenue_avg': 0.0,
+    'current_client': '',
     'rain_timer': 0,
     'dam_broken': False,
     'overflow_start': None,
@@ -75,7 +82,8 @@ state = {
         'water_volume': [],
         'water_liters': [],
         'price_eur': [],
-        'revenue': []
+        'revenue': [],
+        'client': []
     }
 }
 
@@ -266,8 +274,10 @@ def update_state():
             state['water_liters'] = volume * 1000
             state['power'] = 0.0
             state['price_eur'] = current_price()
+            state['current_client'] = 'N/A'
             state['history']['price_eur'].append(state['price_eur'])
             state['history']['revenue'].append(0.0)
+            state['history']['client'].append('N/A')
         else:
             base_inflow = 0.2
             if state['weather'] == 'lluvia':
@@ -291,13 +301,17 @@ def update_state():
             state['water_liters'] = volume * 1000
             # potencia total segun formula P = rho*g*Q*H (en MW)
             state['power'] = WATER_DENSITY * GRAVITY * state['flow'] * state['water_level'] / 1_000_000
-            state['price_eur'] = current_price()
+            base_p = current_price()
+            client_name, mult = max(CLIENTS, key=lambda c: c[1])
+            state['current_client'] = client_name
+            state['price_eur'] = base_p * mult
             energy_kwh = state['power'] / 3.6
             revenue = energy_kwh * state['price_eur']
             state['revenue_total'] += revenue
             state['revenue_avg'] = state['revenue_total'] / (len(state['history']['time']) + 1)
             state['history']['price_eur'].append(state['price_eur'])
             state['history']['revenue'].append(revenue)
+            state['history']['client'].append(client_name)
             if state['pressure'] >= 100:
                 state['dam_broken'] = True
 
@@ -516,7 +530,11 @@ def api_state():
         'turbine_rpm': [max(0.0, (r + random.uniform(-5, 5)) if r > 0 else 0.0) for r in state['turbine_rpm']],
         'turbine_broken': list(state['turbine_broken']),
         'rpm_avg': max(0.0, sum(state['turbine_rpm']) / NUM_GATES + (random.uniform(-5, 5) if any(state['turbine_rpm']) else 0)),
-        'power': state['power'] + (random.uniform(-0.2, 0.2) if state['power'] > 0 else 0.0)
+        'power': state['power'] + (random.uniform(-0.2, 0.2) if state['power'] > 0 else 0.0),
+        'current_client': state['current_client'],
+        'price_eur': state['price_eur'],
+        'revenue_total': state['revenue_total'],
+        'revenue_avg': state['revenue_avg']
     }
 
     hist_copy = {
@@ -534,8 +552,9 @@ def api_state():
         'turbine_temp': [v + random.uniform(-0.5, 0.5) for v in state['history']['turbine_temp']],
         'power': [v + (random.uniform(-0.2, 0.2) if v > 0 else 0.0) for v in state['history']['power']],
         'rpm': [max(0.0, v + (random.uniform(-5, 5) if v > 0 else 0.0)) for v in state['history']['rpm']],
-        'price_eur': [v for v in state['history']['price_eur']],
-        'revenue': [v for v in state['history']['revenue']]
+        'price_eur': list(state['history']['price_eur']),
+        'revenue': list(state['history']['revenue']),
+        'client': list(state['history']['client'])
     }
     level, params = calc_alert()
     return {
@@ -553,6 +572,7 @@ def api_state():
         'price_eur': state['price_eur'],
         'revenue_total': state['revenue_total'],
         'revenue_avg': state['revenue_avg'],
+        'current_client': state['current_client'],
         'alert_level': level,
         'alert_params': params
     }

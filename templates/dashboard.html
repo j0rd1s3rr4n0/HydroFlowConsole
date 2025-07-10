@@ -167,6 +167,7 @@
           <p class="mb-1"><i class="bi bi-speedometer"></i> RPM promedio: <strong id="rpm">{{ "%.0f"|format(state['rpm_avg']) }}</strong> rpm</p>
           <p class="mb-1"><i class="bi bi-lightning-fill"></i> Potencia total: <strong id="power">{{ "%.2f"|format(state['power']) }}</strong> MW</p>
           <p class="mb-1"><i class="bi bi-currency-euro"></i> Precio: <strong id="price">{{ "%.4f"|format(state['price_eur']) }}</strong> €/kWh</p>
+          <p class="mb-1"><i class="bi bi-people"></i> Cliente: <strong id="client">{{ state['current_client'] }}</strong></p>
           <p class="mb-1"><i class="bi bi-cash-stack"></i> Ganancia total: <strong id="revenue">{{ "%.2f"|format(state['revenue_total']) }}</strong> €</p>
           <p class="mb-1"><i class="bi bi-graph-up"></i> Media/s: <strong id="revenue_avg">{{ "%.4f"|format(state['revenue_avg']) }}</strong> €/s</p>
           <div id="alert-area">
@@ -458,6 +459,7 @@
       document.getElementById('rpm').textContent = st.rpm_avg.toFixed(0);
       document.getElementById('power').textContent = st.power.toFixed(2);
       document.getElementById('price').textContent = st.price_eur.toFixed(4);
+      document.getElementById('client').textContent = st.current_client;
       document.getElementById('revenue').textContent = st.revenue_total.toFixed(2);
       document.getElementById('revenue_avg').textContent = st.revenue_avg.toFixed(4);
       const water = document.getElementById('water');

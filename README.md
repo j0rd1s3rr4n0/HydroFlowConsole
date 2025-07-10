@@ -101,6 +101,10 @@ La cabecera muestra ahora un pequeño menú oscuro con el usuario conectado y un
 el tiempo, la temperatura, el viento y la humedad actuales.
 
 HydroFlow Console pretende ser un ejemplo didáctico de simulación y de vulnerabilidades de deserialización, a la vez que ofrece un modelo de cálculo con un mínimo de realismo físico.
+
+El sistema calcula el precio de la electricidad cada segundo en función de una tabla horaria. Un pequeño algoritmo elige automáticamente el comprador de entre varias compañías energéticas (EnerCo, GreenGrid, HydroBuy, EcoWatt) seleccionando la mejor oferta disponible. Ese precio se muestra en tiempo real junto con las ganancias acumuladas.
+
+La página de inicio usa ahora imágenes locales de la carpeta `static/assets` y un carrusel de 20 socios ficticios animados con CSS. También muestra las ganancias y el cliente actual en tiempo real consultando `/state`.
 ## Firmware y autopilot
 Al iniciar la aplicación el autopilot está **activo** y va abriendo o cerrando compuertas para mantener la presión entre **45 y 55 bar**. El endpoint `/firmware/update` permite subir archivos `firmware7331.bin` que se leen como texto. Deben contener las líneas `autopilot: on|off` y `warnings: on|off`. Con ellas se puede activar o desactivar tanto el autopilot como la visualización de avisos de riesgo.
 

@@ -5,13 +5,13 @@
 <title>HydroFlow Console</title>
 <style>
   * {margin:0;padding:0;box-sizing:border-box;}
-  body {font-family:Arial,Helvetica,sans-serif;color:#333;line-height:1.6;}
+  body {font-family:Arial,Helvetica,sans-serif;color:#333;line-height:1.6;background:#f8f9fa;}
   header {position:fixed;top:0;left:0;width:100%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.1);z-index:1000;}
   header .container {display:flex;justify-content:space-between;align-items:center;padding:1rem;max-width:1200px;margin:auto;}
   header nav ul {list-style:none;display:flex;gap:1rem;}
   header nav a {text-decoration:none;color:#333;transition:color .3s;}
   header nav a:hover {color:#1b66c9;}
-  .hero {height:100vh;background:url('https://source.unsplash.com/1600x900/?dam') center/cover no-repeat;display:flex;flex-direction:column;justify-content:center;align-items:center;color:#fff;text-align:center;}
+  .hero {height:100vh;background:url('{{ url_for('static', filename='assets/hero.svg') }}') center/cover no-repeat;display:flex;flex-direction:column;justify-content:center;align-items:center;color:#fff;text-align:center;}
   .hero h1 {font-size:3rem;margin-bottom:.5rem;}
   .hero p {font-size:1.2rem;}
   .btn {display:inline-block;margin-top:1.5rem;padding:.8rem 1.6rem;background:#1b66c9;color:#fff;text-decoration:none;border-radius:4px;transition:background .3s;}
@@ -23,7 +23,9 @@
   .features {display:flex;flex-wrap:wrap;gap:2rem;justify-content:space-between;margin-top:2rem;}
   .feature {flex:1 1 200px;text-align:center;}
   .feature img {width:60px;margin-bottom:1rem;}
-  #partners img {height:50px;margin:1rem;opacity:.8;}
+  #partners .logo-slider{overflow:hidden;white-space:nowrap;}
+  #partners .logo{display:inline-block;width:120px;height:50px;background:#eee;color:#333;margin:0 10px;line-height:50px;text-align:center;font-size:14px;border-radius:4px;animation:slide 20s linear infinite;}
+  @keyframes slide{0%{transform:translateX(100%);}100%{transform:translateX(-100%);}}
   .cta {background:#1b66c9;color:#fff;text-align:center;padding:3rem 1rem;}
   footer {background:#222;color:#ccc;text-align:center;padding:2rem 1rem;font-size:.9rem;}
   html {scroll-behavior:smooth;}
@@ -54,7 +56,7 @@
 
 <section id="quees">
   <div class="container grid">
-    <img src="https://source.unsplash.com/800x600/?hydroelectric" alt="Panel">
+    <img src="{{ url_for('static', filename='assets/panel.svg') }}" alt="Panel">
     <div>
       <h2>¿Qué es HydroFlow Console?</h2>
       <p>HydroFlow Console es una plataforma modular para monitorizar y automatizar presas y estaciones hidroeléctricas. Permite supervisar compuertas, simular condiciones meteorológicas y calcular presión, caudal y potencia generada.</p>
@@ -88,7 +90,7 @@
 
 <section id="demo">
   <div class="container grid">
-    <img src="https://source.unsplash.com/800x600/?dashboard" alt="Demo">
+    <img src="{{ url_for('static', filename='assets/dashboard.svg') }}" alt="Demo">
     <div>
       <h2>Demo interactiva</h2>
       <p>Observa cómo responde el sistema ante lluvias intensas o presión crítica.</p>
@@ -96,14 +98,23 @@
   </div>
 </section>
 
+<section id="revenue">
+  <div class="container text-center">
+    <h2>Ventas de energía</h2>
+    <p>Precio actual: <strong id="price_live">0.0000</strong> €/kWh</p>
+    <p>Cliente seleccionado: <strong id="client_live">-</strong></p>
+    <p>Ganancia acumulada: <strong id="rev_live">0.00</strong> €</p>
+  </div>
+</section>
+
 <section id="partners" class="dark">
   <div class="container">
     <h2>Nuestros partners</h2>
     <p>Ya confían en nosotros operadores hidráulicos y entidades energéticas.</p>
-    <div>
-      <img src="https://source.unsplash.com/120x50/?logo" alt="Partner">
-      <img src="https://source.unsplash.com/120x50/?company" alt="Partner">
-      <img src="https://source.unsplash.com/120x50/?energy" alt="Partner">
+    <div class="logo-slider">
+      {% for i in range(20) %}
+      <div class="logo">Partner {{ i+1 }}</div>
+      {% endfor %}
     </div>
   </div>
 </section>
@@ -117,5 +128,16 @@
   HydroFlow Solutions &copy; 2025 · Aviso legal
   <div>Redes sociales</div>
 </footer>
+<script>
+async function refreshRevenue(){
+  const r = await fetch('/state');
+  const data = await r.json();
+  document.getElementById('price_live').textContent = data.price_eur.toFixed(4);
+  document.getElementById('client_live').textContent = data.current_client;
+  document.getElementById('rev_live').textContent = data.revenue_total.toFixed(2);
+}
+setInterval(refreshRevenue, 5000);
+refreshRevenue();
+</script>
 </body>
 </html>
