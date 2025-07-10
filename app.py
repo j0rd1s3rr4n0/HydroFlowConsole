@@ -519,6 +519,17 @@ def api_state():
 @app.route('/firmware/update', methods=['GET', 'POST'])
 def firmware_update():
     """Carga un archivo de firmware y activa/desactiva el modo autopilot."""
+    raw = request.cookies.get('session')
+    if not raw:
+        return 'Sin sesion', 400
+    try:
+        session = load_cookie(raw)
+    except Exception:
+        return 'Sesion corrupta', 400
+
+    if session.get('role') != 'admin':
+        return 'Acceso denegado', 403
+
     global autopilot_enabled
     if request.method == 'POST':
         file = request.files.get('file')
@@ -541,6 +552,17 @@ def firmware_update():
 @app.route('/firmware/download')
 def firmware_download():
     """Descarga el último firmware cargado."""
+    raw = request.cookies.get('session')
+    if not raw:
+        return 'Sin sesion', 400
+    try:
+        session = load_cookie(raw)
+    except Exception:
+        return 'Sesion corrupta', 400
+
+    if session.get('role') != 'admin':
+        return 'Acceso denegado', 403
+
     filename = 'firmware7331.bin'
     path = os.path.join('firmware_uploads', filename)
     if not os.path.exists(path):
