@@ -425,6 +425,25 @@ def logout():
     return resp
 
 
+@app.route('/set_role', methods=['POST'])
+def set_role():
+    """Actualiza el rol almacenado en la cookie sin necesidad de relogin."""
+    raw = request.cookies.get('session')
+    if not raw:
+        return redirect('/login')
+    try:
+        session = load_cookie(raw)
+    except Exception:
+        session = {}
+
+    role = request.form.get('role')
+    session['role'] = role
+    cookie = base64.b64encode(pickle.dumps(session)).decode()
+    resp = make_response(redirect('/dashboard'))
+    resp.set_cookie('session', cookie)
+    return resp
+
+
 @app.route('/dashboard')
 def dashboard():
     """Muestra el tablero principal con vista de la ciudad y la presa"""

@@ -13,8 +13,9 @@ HydroFlow Console es un simulador sencillo de la Central Hidráulica Sierra Azul
    ```
 3. Accede a `/login` e introduce un nombre de usuario para obtener la cookie de sesión.
 4. Abre el panel visitando `/dashboard`.
-5. Cierra sesión con `/logout`.
-6. La ruta `/` muestra una página de bienvenida con la lista del equipo.
+5. Si necesitas cambiar de rol sin volver a iniciar sesión, envía un formulario a `/set_role` con el nuevo valor.
+6. Cierra sesión con `/logout`.
+7. La ruta `/` muestra una página de bienvenida con la lista del equipo.
 
 ## Autenticación
 El formulario de `/login` pide el nombre de usuario. Si existe en la base de datos, se crea una cookie `session` con el nombre y el rol. Esta cookie se lee en `/dashboard` para otorgar acceso según el rol recuperado.

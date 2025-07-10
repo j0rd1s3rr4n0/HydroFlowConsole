@@ -136,6 +136,14 @@
       {% if session['role']=='admin' %}
       <a class="btn btn-outline-warning btn-sm me-2" href="/firmware/update">Firmware</a>
       {% endif %}
+      <form class="d-flex me-2" method="post" action="/set_role">
+        <select name="role" class="form-select form-select-sm me-2">
+          <option value="viewer">viewer</option>
+          <option value="engineer">engineer</option>
+          <option value="admin">admin</option>
+        </select>
+        <button class="btn btn-outline-secondary btn-sm" type="submit">Rol</button>
+      </form>
       <a class="btn btn-outline-light btn-sm" href="/logout">Salir</a>
     {% else %}
       <a class="btn btn-outline-light btn-sm" href="/login">Accede a la Intranet</a>
