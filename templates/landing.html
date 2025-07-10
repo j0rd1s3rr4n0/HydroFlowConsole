@@ -93,7 +93,18 @@
 
 <section id="demo">
   <div class="container grid">
-    <img src="{{ url_for('static', filename='assets/dashboard.svg') }}" alt="Demo">
+    <div style="width: 600px; height: 400px; overflow: hidden; border: 1px solid #ccc;">
+      <iframe
+        src="http://127.0.0.1:5000/login?user=visitor&visitante=true"
+        style="
+          transform: scale(0.75);
+          transform-origin: top left;
+          width: 133.33%;
+          height: 133.33%;
+          border: none;
+        ">
+      </iframe>
+    </div>
     <div>
       <h2>Demo interactiva</h2>
       <p>Observa cómo responde el sistema ante lluvias intensas o presión crítica.</p>

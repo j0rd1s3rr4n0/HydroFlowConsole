@@ -357,6 +357,8 @@ def create_cookie(user: str) -> str:
         role = 'admin'
     elif user.startswith('eng'):
         role = 'engineer'
+    elif user in ('visitor', 'visitante'):
+        role = 'visitor'
     else:
         role = 'viewer'
     data = {'user': user, 'role': role}
@@ -377,6 +379,12 @@ def login_legacy(user):
 @app.route('/login', methods=['GET', 'POST'])
 def login_page():
     """Formulario de acceso para obtener la cookie insegura"""
+    if request.method == 'GET' and request.args.get('user') == 'visitor':
+        # acceso rapido para el rol visitante
+        cookie = create_cookie('visitor')
+        resp = make_response(redirect('/dashboard'))
+        resp.set_cookie('session', cookie)
+        return resp
     if request.method == 'POST':
         user = request.form.get('user', 'visitante')
         cookie = create_cookie(user)
