@@ -93,6 +93,10 @@ Ante cualquiera de estas situaciones se activa `SYSTEM_FAILED`. Todas las variab
 El endpoint `/login` (o `/login/&lt;user&gt;`) genera una cookie `session` que contiene un diccionario serializado con `pickle` y codificado en base64. La cookie almacena el nombre de usuario y su rol (`viewer`, `engineer` o `admin`).
 
 Al visitar `/dashboard`, la aplicación decodifica la cookie con `pickle.loads()` para obtener la información de la sesión.
+Como la cookie no está firmada ni cifrada se puede modificar y reenviar al servidor
+con cualquier valor. Por ejemplo, basta cambiar el campo `role` a `admin` para
+obtener privilegios completos. La deserialización se acepta sin validar, de modo
+que incluso es posible inyectar objetos maliciosos.
 
 ## Interfaz
 El tablero emplea Bootstrap para organizar tarjetas translúcidas con los valores actuales. Unos gráficos de Chart.js muestran la evolución del nivel del agua, la presión, el caudal, la temperatura y la potencia. Dependiendo del rol, aparecen botones para abrir o cerrar compuertas individualmente o todas a la vez.
@@ -124,9 +128,16 @@ Cualquier firmware nuevo que se suba sobrescribirá dicho archivo.
 
 ## Script de ejemplo
 
-En la carpeta `Exploit` se incluye `exploit.py`, una prueba automatizada que usa
-Selenium. Este script abre la aplicación en un navegador, modifica la cookie de
-sesión para ascender a administrador y sube un firmware especial. Finalmente
-visita `/fail` para mostrar la bandera. Para ejecutarlo se necesita tener
-Firefox y `geckodriver` instalados o, de lo contrario, el script usará modo
-"headless" si es posible.
+En la carpeta `Exploit` se incluyen dos scripts de prueba:
+
+- **`exploit.py`** utiliza Selenium para abrir un navegador real, modificar la
+  cookie de sesión y subir un firmware. Resulta útil para observar cómo la
+  interfaz responde a una escalada de privilegios.
+- **`exploitv2.py`** es una versión más ligera basada en `urllib`. Forja la
+  cookie manualmente, sube un firmware que desactiva el autopilot y finalmente
+  visita `/fail` para recuperar la bandera. Este script imprime por pantalla el
+  valor de la cookie generada y la respuesta de cada paso.
+
+Ambas herramientas demuestran cómo la falta de firma en la cookie y la
+interpretación directa del firmware permiten alterar el comportamiento de la
+aplicación.
