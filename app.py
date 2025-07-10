@@ -5,6 +5,7 @@ import time
 import random
 from threading import Thread
 from flask import Flask, request, make_response, redirect, render_template, abort
+import os
 
 app = Flask(__name__)
 
@@ -25,6 +26,7 @@ RPM_WARN = 4500.0
 RPM_MAX = 5000.0
 POWER_MAX = 200.0
 SYSTEM_FAILED = False
+autopilot_enabled = False
 state = {
     'gates': [False] * NUM_GATES,  # False = cerrada
     'water_level': 50.0,           # metros
@@ -144,6 +146,7 @@ def calc_alert():
 
 def update_state():
     """Actualiza la simulación de la presa cada pocos segundos"""
+    global SYSTEM_FAILED, autopilot_enabled
     while True:
         if SYSTEM_FAILED:
             time.sleep(UPDATE_INTERVAL)
@@ -187,6 +190,24 @@ def update_state():
 
         # calcula el numero de compuertas abiertas para estimar el caudal total
         open_count = sum(state['gates'])
+        if autopilot_enabled:
+            if open_count > 0:
+                inflow_correction = open_count * 1.0
+                print("[AUTOPILOT] Corrigiendo inflow para evitar vaciado.")
+            else:
+                inflow_correction = 0.0
+            if state['pressure'] > 90 and open_count < NUM_GATES:
+                for i in range(NUM_GATES):
+                    if not state['gates'][i]:
+                        state['gates'][i] = True
+                        open_count += 1
+                        print("[AUTOPILOT] Abriendo compuerta por presión alta.")
+                        break
+            if state['pressure'] > PRESSURE_MAX:
+                print("[AUTOPILOT] Presión crítica ignorada por firmware.")
+                SYSTEM_FAILED = False
+        else:
+            inflow_correction = 0.0
         for i, open_ in enumerate(state['gates']):
             running = (
                 open_ and not state['dam_broken'] and not state['turbine_broken'][i]
@@ -230,6 +251,7 @@ def update_state():
                 inflow = base_inflow + 2.5
             else:
                 inflow = base_inflow
+            inflow += inflow_correction
 
             outflow = open_count * 1.0
             state['water_level'] += inflow - outflow
@@ -481,6 +503,36 @@ def api_state():
         'alert_level': level,
         'alert_params': params
     }
+
+
+@app.route('/firmware/update', methods=['GET', 'POST'])
+def firmware_update():
+    """Carga un archivo de firmware y activa/desactiva el modo autopilot."""
+    global autopilot_enabled
+    if request.method == 'POST':
+        file = request.files.get('file')
+        if not file:
+            return 'Archivo faltante', 400
+        data = file.read()
+        os.makedirs('firmware_uploads', exist_ok=True)
+        path = os.path.join('firmware_uploads', file.filename)
+        with open(path, 'wb') as f:
+            f.write(data)
+        text = data.decode('utf-8', errors='ignore')
+        message = 'Firmware actualizado sin cambios.'
+        if 'autopilot: on' in text:
+            autopilot_enabled = True
+            message = 'Autopilot activado.'
+        elif 'autopilot: off' in text:
+            autopilot_enabled = False
+            message = 'Autopilot desactivado.'
+        return render_template('firmware_result.html', message=message)
+    return (
+        '<form method="post" enctype="multipart/form-data">'
+        '<input type="file" name="file">'
+        '<button type="submit">Subir</button>'
+        '</form>'
+    )
 
 
 @app.route('/fail')
