@@ -51,17 +51,28 @@ def init_db():
     """Crea la base de datos con la tabla team y datos iniciales."""
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
-    cur.execute(
-        'CREATE TABLE IF NOT EXISTS team (id INTEGER PRIMARY KEY, fullname TEXT, username TEXT UNIQUE, role TEXT)'
-    )
-    cur.execute('SELECT COUNT(*) FROM team')
-    if cur.fetchone()[0] == 0:
+    cur.execute("PRAGMA table_info(team)")
+    cols = [r[1] for r in cur.fetchall()]
+    if 'password' not in cols:
+        cur.execute('DROP TABLE IF EXISTS team')
+        cur.execute(
+            'CREATE TABLE team (id INTEGER PRIMARY KEY, fullname TEXT, username TEXT UNIQUE, role TEXT, password TEXT)'
+        )
         members = [
-            (1, 'Juan Eduardo', 'j.eduardo', 'engineer'),
-            (2, 'Laura Pérez', 'l.perez', 'supervisor'),
-            (3, 'Carlos López', 'c.lopez', 'admin')
+            (1, 'Juan Eduardo', 'j.eduardo', 'engineer', 'engpass'),
+            (2, 'Laura Pérez', 'l.perez', 'viewer', 'viewer'),
+            (3, 'Carlos López', 'c.lopez', 'admin', 'adminpass')
         ]
-        cur.executemany('INSERT INTO team VALUES (?,?,?,?)', members)
+        cur.executemany('INSERT INTO team VALUES (?,?,?,?,?)', members)
+    else:
+        cur.execute('SELECT COUNT(*) FROM team')
+        if cur.fetchone()[0] == 0:
+            members = [
+                (1, 'Juan Eduardo', 'j.eduardo', 'engineer', 'engpass'),
+                (2, 'Laura Pérez', 'l.perez', 'viewer', 'viewer'),
+                (3, 'Carlos López', 'c.lopez', 'admin', 'adminpass')
+            ]
+            cur.executemany('INSERT INTO team VALUES (?,?,?,?,?)', members)
     conn.commit()
     conn.close()
 state = {
@@ -393,6 +404,9 @@ def load_cookie(cookie: str):
 
 @app.route('/login/<user>')
 def login_legacy(user):
+    if user != 'l.perez':
+        # los demas usuarios deben pasar por el formulario con contraseña
+        return redirect('/login')
     cookie = create_cookie(user)
     resp = make_response(redirect('/dashboard'))
     resp.set_cookie('session', cookie)
@@ -403,16 +417,19 @@ def login_page():
     """Formulario de autenticaci\u00f3n mediante nombre de usuario."""
     if request.method == 'POST':
         username = request.form.get('username')
+        password = request.form.get('password')
         conn = sqlite3.connect(DB_PATH)
         cur = conn.cursor()
-        row = cur.execute('SELECT username, role FROM team WHERE username=?', (username,)).fetchone()
+        row = cur.execute('SELECT username, role, password FROM team WHERE username=?', (username,)).fetchone()
         conn.close()
         if row:
-            data = {'username': row[0], 'role': row[1]}
-            cookie = base64.b64encode(pickle.dumps(data)).decode()
-            resp = make_response(redirect('/dashboard'))
-            resp.set_cookie('session', cookie)
-            return resp
+            if row[0] == 'l.perez' or password == row[2]:
+                data = {'username': row[0], 'role': row[1]}
+                cookie = base64.b64encode(pickle.dumps(data)).decode()
+                resp = make_response(redirect('/dashboard'))
+                resp.set_cookie('session', cookie)
+                return resp
+            return 'Contrase\u00f1a incorrecta', 403
         return 'Usuario no encontrado', 404
     return render_template('login.html')
 
@@ -425,23 +442,6 @@ def logout():
     return resp
 
 
-@app.route('/set_role', methods=['POST'])
-def set_role():
-    """Actualiza el rol almacenado en la cookie sin necesidad de relogin."""
-    raw = request.cookies.get('session')
-    if not raw:
-        return redirect('/login')
-    try:
-        session = load_cookie(raw)
-    except Exception:
-        session = {}
-
-    role = request.form.get('role')
-    session['role'] = role
-    cookie = base64.b64encode(pickle.dumps(session)).decode()
-    resp = make_response(redirect('/dashboard'))
-    resp.set_cookie('session', cookie)
-    return resp
 
 
 @app.route('/dashboard')

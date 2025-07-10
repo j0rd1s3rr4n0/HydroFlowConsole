@@ -11,14 +11,13 @@ HydroFlow Console es un simulador sencillo de la Central Hidráulica Sierra Azul
    ```bash
    python app.py
    ```
-3. Accede a `/login` e introduce un nombre de usuario para obtener la cookie de sesión.
+3. Accede a `/login` e introduce tu usuario y contraseña (solo `l.perez` puede omitirla).
 4. Abre el panel visitando `/dashboard`.
-5. Si necesitas cambiar de rol sin volver a iniciar sesión, envía un formulario a `/set_role` con el nuevo valor.
-6. Cierra sesión con `/logout`.
-7. La ruta `/` muestra una página de bienvenida con la lista del equipo.
+5. Cierra sesión con `/logout`.
+6. La ruta `/` muestra una página de bienvenida con la lista del equipo.
 
 ## Autenticación
-El formulario de `/login` pide el nombre de usuario. Si existe en la base de datos, se crea una cookie `session` con el nombre y el rol. Esta cookie se lee en `/dashboard` para otorgar acceso según el rol recuperado.
+El formulario de `/login` pide nombre de usuario y contraseña. Solo `l.perez` puede entrar sin contraseña. Si las credenciales son válidas se crea una cookie `session` con el nombre y el rol. Esta cookie se lee en `/dashboard` para otorgar acceso según el rol recuperado.
 
 ## Estructura general
 - **app.py** contiene toda la lógica Flask y la simulación física.
