@@ -26,7 +26,7 @@ RPM_WARN = 4500.0
 RPM_MAX = 5000.0
 POWER_MAX = 200.0
 SYSTEM_FAILED = False
-autopilot_enabled = False
+autopilot_enabled = True
 state = {
     'gates': [False] * NUM_GATES,  # False = cerrada
     'water_level': 50.0,           # metros
@@ -191,21 +191,21 @@ def update_state():
         # calcula el numero de compuertas abiertas para estimar el caudal total
         open_count = sum(state['gates'])
         if autopilot_enabled:
-            if open_count > 0:
-                inflow_correction = open_count * 1.0
-                print("[AUTOPILOT] Corrigiendo inflow para evitar vaciado.")
-            else:
-                inflow_correction = 0.0
-            if state['pressure'] > 90 and open_count < NUM_GATES:
+            inflow_correction = open_count * 1.0 if open_count > 0 else 0.0
+            if state['pressure'] > 80 and open_count < NUM_GATES:
                 for i in range(NUM_GATES):
                     if not state['gates'][i]:
                         state['gates'][i] = True
                         open_count += 1
-                        print("[AUTOPILOT] Abriendo compuerta por presión alta.")
+                        print("[AUTOPILOT] Abriendo compuerta para reducir presión.")
                         break
-            if state['pressure'] > PRESSURE_MAX:
-                print("[AUTOPILOT] Presión crítica ignorada por firmware.")
-                SYSTEM_FAILED = False
+            elif state['pressure'] < 60 and open_count > 0:
+                for i in range(NUM_GATES):
+                    if state['gates'][i]:
+                        state['gates'][i] = False
+                        open_count -= 1
+                        print("[AUTOPILOT] Cerrando compuerta para aumentar presión.")
+                        break
         else:
             inflow_correction = 0.0
         for i, open_ in enumerate(state['gates']):
@@ -527,12 +527,26 @@ def firmware_update():
             autopilot_enabled = False
             message = 'Autopilot desactivado.'
         return render_template('firmware_result.html', message=message)
+    current = 'autopilot_on.bin' if autopilot_enabled else 'autopilot_off.bin'
+    msg = 'Autopilot activado' if autopilot_enabled else 'Autopilot desactivado'
     return (
-        '<form method="post" enctype="multipart/form-data">'
+        f'<p>Firmware actual: {msg}</p>'
+        f'<a href="/firmware/download" class="btn btn-secondary btn-sm">Descargar</a>'
+        '<form method="post" enctype="multipart/form-data" class="mt-2">'
         '<input type="file" name="file">'
-        '<button type="submit">Subir</button>'
+        '<button type="submit" class="btn btn-primary btn-sm ms-2">Subir</button>'
         '</form>'
     )
+
+@app.route('/firmware/download')
+def firmware_download():
+    """Descarga un firmware de ejemplo según el estado actual."""
+    filename = 'autopilot_on.bin' if autopilot_enabled else 'autopilot_off.bin'
+    path = os.path.join('firmware_uploads', filename)
+    return (open(path, 'rb').read(), 200, {
+        'Content-Type': 'application/octet-stream',
+        'Content-Disposition': f'attachment; filename={filename}'
+    })
 
 
 @app.route('/fail')
