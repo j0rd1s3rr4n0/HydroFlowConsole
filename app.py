@@ -191,23 +191,23 @@ def update_state():
         # calcula el numero de compuertas abiertas para estimar el caudal total
         open_count = sum(state['gates'])
         if autopilot_enabled:
-            inflow_correction = open_count * 1.0 if open_count > 0 else 0.0
-            if state['pressure'] > 80 and open_count < NUM_GATES:
+            # mantén la presión entre 45 y 55 bar abriendo o cerrando compuertas
+            if state['pressure'] > 55 and open_count < NUM_GATES:
                 for i in range(NUM_GATES):
                     if not state['gates'][i]:
                         state['gates'][i] = True
                         open_count += 1
-                        print("[AUTOPILOT] Abriendo compuerta para reducir presión.")
-                        break
-            elif state['pressure'] < 60 and open_count > 0:
-                for i in range(NUM_GATES):
+                        print("[AUTOPILOT] Abriendo compuerta por presión alta.")
+                        if state['pressure'] <= 50:
+                            break
+            elif state['pressure'] < 45 and open_count > 0:
+                for i in range(NUM_GATES - 1, -1, -1):
                     if state['gates'][i]:
                         state['gates'][i] = False
                         open_count -= 1
-                        print("[AUTOPILOT] Cerrando compuerta para aumentar presión.")
+                        print("[AUTOPILOT] Cerrando compuerta por presión baja.")
                         break
-        else:
-            inflow_correction = 0.0
+        inflow_correction = 0.0
         for i, open_ in enumerate(state['gates']):
             running = (
                 open_ and not state['dam_broken'] and not state['turbine_broken'][i]
@@ -523,37 +523,29 @@ def firmware_update():
     if request.method == 'POST':
         file = request.files.get('file')
         if not file:
-            return 'Archivo faltante', 400
+            return render_template('firmware_result.html', message='Archivo faltante.')
         data = file.read()
+        text = data.decode('utf-8', errors='ignore').strip().lower()
+        if text not in ('autopilot: on', 'autopilot: off'):
+            return render_template('firmware_result.html', message='Firmware inválido.')
         os.makedirs('firmware_uploads', exist_ok=True)
-        path = os.path.join('firmware_uploads', file.filename)
+        path = os.path.join('firmware_uploads', 'firmware7331.bin')
         with open(path, 'wb') as f:
             f.write(data)
-        text = data.decode('utf-8', errors='ignore')
-        message = 'Firmware actualizado sin cambios.'
-        if 'autopilot: on' in text:
-            autopilot_enabled = True
-            message = 'Autopilot activado.'
-        elif 'autopilot: off' in text:
-            autopilot_enabled = False
-            message = 'Autopilot desactivado.'
+        autopilot_enabled = text.endswith('on')
+        message = 'Autopilot activado.' if autopilot_enabled else 'Autopilot desactivado.'
         return render_template('firmware_result.html', message=message)
-    current = 'autopilot_on.bin' if autopilot_enabled else 'autopilot_off.bin'
     msg = 'Autopilot activado' if autopilot_enabled else 'Autopilot desactivado'
-    return (
-        f'<p>Firmware actual: {msg}</p>'
-        f'<a href="/firmware/download" class="btn btn-secondary btn-sm">Descargar</a>'
-        '<form method="post" enctype="multipart/form-data" class="mt-2">'
-        '<input type="file" name="file">'
-        '<button type="submit" class="btn btn-primary btn-sm ms-2">Subir</button>'
-        '</form>'
-    )
+    return render_template('firmware.html', autopilot=autopilot_enabled, message=msg)
 
 @app.route('/firmware/download')
 def firmware_download():
-    """Descarga un firmware de ejemplo según el estado actual."""
-    filename = 'autopilot_on.bin' if autopilot_enabled else 'autopilot_off.bin'
+    """Descarga el último firmware cargado."""
+    filename = 'firmware7331.bin'
     path = os.path.join('firmware_uploads', filename)
+    if not os.path.exists(path):
+        # si no se ha subido nada aún, usa un ejemplo según el estado actual
+        path = os.path.join('firmware_uploads', 'autopilot_on.bin' if autopilot_enabled else 'autopilot_off.bin')
     return (open(path, 'rb').read(), 200, {
         'Content-Type': 'application/octet-stream',
         'Content-Disposition': f'attachment; filename={filename}'
