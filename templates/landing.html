@@ -22,7 +22,7 @@
   .grid img {width:100%;max-width:500px;border-radius:8px;}
   .features {display:flex;flex-wrap:wrap;gap:2rem;justify-content:space-between;margin-top:2rem;}
   .feature {flex:1 1 200px;text-align:center;}
-  .feature img {width:60px;margin-bottom:1rem;}
+  .feature img {width:60px;height:60px;margin-bottom:1rem;object-fit:contain;}
   #partners .logo-slider{overflow:hidden;white-space:nowrap;}
   #partners .logo{display:inline-block;width:120px;height:50px;background:#eee;color:#333;margin:0 10px;line-height:50px;text-align:center;font-size:14px;border-radius:4px;animation:slide 20s linear infinite;}
   @keyframes slide{0%{transform:translateX(100%);}100%{transform:translateX(-100%);}}
@@ -31,6 +31,15 @@
   .iframe-wrapper{width:100%;max-width:600px;height:400px;border:1px solid #ccc;overflow:hidden;margin:auto;}
   .iframe-wrapper iframe{width:133.33%;height:133.33%;transform:scale(0.75);transform-origin:top left;border:none;}
   html {scroll-behavior:smooth;}
+
+  @media (max-width: 768px) {
+    header .container {flex-direction:column;gap:.5rem;}
+    header nav ul {flex-direction:column;gap:.5rem;}
+    .hero h1 {font-size:2rem;}
+    .hero p {font-size:1rem;}
+    .grid {flex-direction:column;}
+    .iframe-wrapper {height:auto;}
+  }
 </style>
 </head>
 <body>
@@ -74,19 +83,19 @@
     <h2>Funcionalidades</h2>
     <div class="features">
       <div class="feature">
-        <img src="https://source.unsplash.com/60x60/?monitor" alt="">
+        <img src="{{ url_for('static', filename='assets/feature-monitor.svg') }}" alt="">
         <h3>Supervisión en tiempo real</h3>
       </div>
       <div class="feature">
-        <img src="https://source.unsplash.com/60x60/?control" alt="">
+        <img src="{{ url_for('static', filename='assets/feature-control.svg') }}" alt="">
         <h3>Control remoto de compuertas</h3>
       </div>
       <div class="feature">
-        <img src="https://source.unsplash.com/60x60/?cloud" alt="">
+        <img src="{{ url_for('static', filename='assets/feature-cloud.svg') }}" alt="">
         <h3>Simulación climática</h3>
       </div>
       <div class="feature">
-        <img src="https://source.unsplash.com/60x60/?security" alt="">
+        <img src="{{ url_for('static', filename='assets/feature-security.svg') }}" alt="">
         <h3>Seguridad y diagnóstico remoto</h3>
       </div>
     </div>
