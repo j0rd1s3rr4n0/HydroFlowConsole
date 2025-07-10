@@ -27,6 +27,7 @@ RPM_MAX = 5000.0
 POWER_MAX = 200.0
 SYSTEM_FAILED = False
 autopilot_enabled = True
+warnings_enabled = True
 state = {
     'gates': [False] * NUM_GATES,  # False = cerrada
     'water_level': 50.0,           # metros
@@ -119,6 +120,8 @@ def check_failure():
 
 def calc_alert():
     """Return alert level and parameters that exceed thresholds."""
+    if not warnings_enabled:
+        return None, []
     warn = []
     crit = []
     if state['water_level'] >= MAX_LEVEL:
@@ -530,23 +533,28 @@ def firmware_update():
     if session.get('role') != 'admin':
         return 'Acceso denegado', 403
 
-    global autopilot_enabled
+    global autopilot_enabled, warnings_enabled
     if request.method == 'POST':
         file = request.files.get('file')
         if not file:
             return render_template('firmware_result.html', message='Archivo faltante.')
         data = file.read()
-        text = data.decode('utf-8', errors='ignore').strip().lower()
-        if text not in ('autopilot: on', 'autopilot: off'):
+        text = data.decode('utf-8', errors='ignore').lower()
+        if 'autopilot:' not in text or 'warnings:' not in text:
             return render_template('firmware_result.html', message='Firmware inválido.')
         os.makedirs('firmware_uploads', exist_ok=True)
         path = os.path.join('firmware_uploads', 'firmware7331.bin')
         with open(path, 'wb') as f:
             f.write(data)
-        autopilot_enabled = text.endswith('on')
-        message = 'Autopilot activado.' if autopilot_enabled else 'Autopilot desactivado.'
+        autopilot_enabled = 'autopilot: on' in text
+        warnings_enabled = 'warnings: on' in text
+        msg_auto = 'Autopilot activado' if autopilot_enabled else 'Autopilot desactivado'
+        msg_warn = 'warnings activados' if warnings_enabled else 'warnings desactivados'
+        message = f"{msg_auto}, {msg_warn}."
         return render_template('firmware_result.html', message=message)
-    msg = 'Autopilot activado' if autopilot_enabled else 'Autopilot desactivado'
+    msg_auto = 'Autopilot activado' if autopilot_enabled else 'Autopilot desactivado'
+    msg_warn = 'warnings activados' if warnings_enabled else 'warnings desactivados'
+    msg = f"{msg_auto}, {msg_warn}."
     return render_template('firmware.html', autopilot=autopilot_enabled, message=msg)
 
 @app.route('/firmware/download')

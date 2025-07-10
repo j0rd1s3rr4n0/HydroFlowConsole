@@ -102,9 +102,9 @@ el tiempo, la temperatura, el viento y la humedad actuales.
 
 HydroFlow Console pretende ser un ejemplo didáctico de simulación y de vulnerabilidades de deserialización, a la vez que ofrece un modelo de cálculo con un mínimo de realismo físico.
 ## Firmware y autopilot
-Al iniciar la aplicación el autopilot está **activo** y va abriendo o cerrando compuertas para mantener la presión entre **45 y 55 bar**. El endpoint `/firmware/update` permite subir archivos `firmware7331.bin` que se leen como texto. Si el fichero contiene `autopilot: on` la lógica de autopiloto se mantiene activada; si contiene `autopilot: off` se desactiva.
+Al iniciar la aplicación el autopilot está **activo** y va abriendo o cerrando compuertas para mantener la presión entre **45 y 55 bar**. El endpoint `/firmware/update` permite subir archivos `firmware7331.bin` que se leen como texto. Deben contener las líneas `autopilot: on|off` y `warnings: on|off`. Con ellas se puede activar o desactivar tanto el autopilot como la visualización de avisos de riesgo.
 
 Los administradores disponen en el menú superior de un enlace directo a la página de actualización de firmware para activar o desactivar esta función en caliente.
 
-Para facilitar las pruebas se incluyen dos archivos de ejemplo en `firmware_uploads/` (`autopilot_on.bin` y `autopilot_off.bin`), aunque cualquier firmware subido se guardará como `firmware7331.bin`.
+Para facilitar las pruebas se incluyen dos archivos de ejemplo en `firmware_uploads/` (`autopilot_on.bin` y `autopilot_off.bin`). Ambos contienen también `warnings: on`. Cualquier firmware subido se guardará como `firmware7331.bin`.
 Estos archivos son meramente de texto plano y sirven como base mínima de firmware para la simulación.
