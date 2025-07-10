@@ -322,11 +322,22 @@ def load_cookie(cookie: str):
 
 
 @app.route('/login/<user>')
-def login(user):
+def login_legacy(user):
     cookie = create_cookie(user)
-    resp = make_response(redirect('/'))
+    resp = make_response(redirect('/dashboard'))
     resp.set_cookie('session', cookie)
     return resp
+
+@app.route('/login', methods=['GET', 'POST'])
+def login_page():
+    """Formulario de acceso para obtener la cookie insegura"""
+    if request.method == 'POST':
+        user = request.form.get('user', 'visitante')
+        cookie = create_cookie(user)
+        resp = make_response(redirect('/dashboard'))
+        resp.set_cookie('session', cookie)
+        return resp
+    return render_template('login.html')
 
 
 @app.route('/logout')
@@ -337,8 +348,8 @@ def logout():
     return resp
 
 
-@app.route('/')
-def index():
+@app.route('/dashboard')
+def dashboard():
     """Muestra el tablero principal con vista de la ciudad y la presa"""
     raw = request.cookies.get('session')
     if not raw:
@@ -401,10 +412,10 @@ def index():
     )
 
 # --- interfaz principal ---
-@app.route('/dashboard')
-def dashboard():
-    """Muestra el dashboard principal"""
-    return index()
+@app.route('/')
+def landing():
+    """Página de inicio sencilla de la presa"""
+    return render_template('landing.html')
 
 
 @app.route('/gate/<int:gid>/<action>', methods=['POST'])
@@ -423,7 +434,7 @@ def gate(gid, action):
     if 0 <= gid < NUM_GATES:
         state['gates'][gid] = (action == 'open')
         _recalc_flow_power()
-    return redirect('/')
+    return 'ok'
 
 
 @app.route('/gates/<action>', methods=['POST'])
@@ -442,7 +453,7 @@ def gates_all(action):
 
     state['gates'] = [action == 'open'] * NUM_GATES
     _recalc_flow_power()
-    return redirect('/')
+    return 'ok'
 
 
 @app.route('/state')

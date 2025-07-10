@@ -138,7 +138,7 @@
       {% endif %}
       <a class="btn btn-outline-light btn-sm" href="/logout">Salir</a>
     {% else %}
-      <a class="btn btn-outline-light btn-sm" href="/login/visitante">Iniciar sesión</a>
+      <a class="btn btn-outline-light btn-sm" href="/login">Iniciar sesión</a>
     {% endif %}
     </div>
   </nav>
@@ -235,10 +235,10 @@
 {% if session and session['role'] in ['engineer','admin'] %}
   <div class="row" id="gate-controls">
     <div class="col-12 mb-2 text-center">
-      <form action="{{ url_for('gates_all', action='open') }}" method="post" class="d-inline">
+      <form class="d-inline gate-all-form" data-action="open" action="{{ url_for('gates_all', action='open') }}" method="post">
         <button class="btn btn-success btn-sm">Abrir todas</button>
       </form>
-      <form action="{{ url_for('gates_all', action='close') }}" method="post" class="d-inline ms-2">
+      <form class="d-inline ms-2 gate-all-form" data-action="close" action="{{ url_for('gates_all', action='close') }}" method="post">
         <button class="btn btn-secondary btn-sm">Cerrar todas</button>
       </form>
     </div>
@@ -249,10 +249,10 @@
         <div class="card-body p-2">
           <p class="mb-2">Estado: <span id="gate-status-{{g}}">{{ 'Abierta' if state['gates'][g] else 'Cerrada' }}</span></p>
           <div class="d-flex justify-content-center gap-1">
-            <form action="{{ url_for('gate', gid=g, action='open') }}" method="post">
+            <form class="gate-form" data-gate="{{g}}" data-action="open" action="{{ url_for('gate', gid=g, action='open') }}" method="post">
               <button class="btn btn-sm btn-danger">Abrir</button>
             </form>
-            <form action="{{ url_for('gate', gid=g, action='close') }}" method="post">
+            <form class="gate-form" data-gate="{{g}}" data-action="close" action="{{ url_for('gate', gid=g, action='close') }}" method="post">
               <button class="btn btn-sm btn-primary">Cerrar</button>
             </form>
           </div>
@@ -552,6 +552,23 @@
       const data = await r.json();
       apply(data);
     }
+    document.querySelectorAll('.gate-form').forEach(f=>{
+      f.addEventListener('submit',async e=>{
+        e.preventDefault();
+        const gate=f.dataset.gate;
+        const action=f.dataset.action;
+        await fetch(`/gate/${gate}/${action}`,{method:'POST'});
+        refresh();
+      });
+    });
+    document.querySelectorAll('.gate-all-form').forEach(f=>{
+      f.addEventListener('submit',async e=>{
+        e.preventDefault();
+        const action=f.dataset.action;
+        await fetch(`/gates/${action}`,{method:'POST'});
+        refresh();
+      });
+    });
     setInterval(refresh, 3000);
   </script>
 </body>
