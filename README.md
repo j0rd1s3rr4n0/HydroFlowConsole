@@ -121,3 +121,12 @@ warnings: on
 ```
 
 Cualquier firmware nuevo que se suba sobrescribirá dicho archivo.
+
+## Script de ejemplo
+
+En la carpeta `Exploit` se incluye `exploit.py`, una prueba automatizada que usa
+Selenium. Este script abre la aplicación en un navegador, modifica la cookie de
+sesión para ascender a administrador y sube un firmware especial. Finalmente
+visita `/fail` para mostrar la bandera. Para ejecutarlo se necesita tener
+Firefox y `geckodriver` instalados o, de lo contrario, el script usará modo
+"headless" si es posible.
