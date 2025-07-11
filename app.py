@@ -75,7 +75,6 @@ def init_db():
             cur.executemany('INSERT INTO team VALUES (?,?,?,?,?)', members)
     conn.commit()
     conn.close()
-    init_firmware()
     
 def init_firmware():
     """Crea el archivo de firmware inicial si no existe."""
@@ -735,5 +734,6 @@ def fail(e):
 
 if __name__ == '__main__':
     init_db()
+    init_firmware()
     Thread(target=update_state, daemon=True).start()
     app.run(debug=True, host='0.0.0.0',port=80, threaded=True)
