@@ -75,6 +75,19 @@ def init_db():
             cur.executemany('INSERT INTO team VALUES (?,?,?,?,?)', members)
     conn.commit()
     conn.close()
+    init_firmware()
+    
+def init_firmware():
+    """Crea el archivo de firmware inicial si no existe."""
+    firmware_path = 'firmware_uploads'
+    if not os.path.exists(firmware_path):
+        os.makedirs(firmware_path)
+    firmware_file = os.path.join(firmware_path, 'firmware7331.bin')
+    if not os.path.exists(firmware_file):
+        with open(firmware_file, 'w') as f:
+            f.write("autopilot: on\nwarnings: on\n")
+            
+            
 state = {
     'gates': [False] * NUM_GATES,  # False = cerrada
     'water_level': 50.0,           # metros
@@ -119,6 +132,10 @@ state = {
         'client': []
     }
 }
+
+
+
+            
 
 # --- funciones auxiliares ---
 
@@ -719,4 +736,4 @@ def fail(e):
 if __name__ == '__main__':
     init_db()
     Thread(target=update_state, daemon=True).start()
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0',port=80, threaded=True)
