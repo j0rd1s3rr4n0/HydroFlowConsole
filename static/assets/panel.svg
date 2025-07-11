@@ -1,0 +1,5 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 400'>
+  <rect width='800' height='400' fill='#1c1f26'/>
+  <rect x='100' y='80' width='600' height='240' fill='#2d3340'/>
+  <text x='50%' y='50%' fill='#8bd' font-size='36' text-anchor='middle' dy='.3em'>Panel de Control</text>
+</svg>

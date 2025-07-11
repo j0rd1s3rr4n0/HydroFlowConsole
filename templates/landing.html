@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>HydroFlow Console</title>
+<style>
+  * {margin:0;padding:0;box-sizing:border-box;}
+  body {font-family:Arial,Helvetica,sans-serif;color:#333;line-height:1.6;background:#f8f9fa;padding-top:70px;}
+  header {position:fixed;top:0;left:0;width:100%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.1);z-index:1000;}
+  header .container {display:flex;justify-content:space-between;align-items:center;padding:1rem;max-width:1200px;margin:auto;}
+  header nav ul {list-style:none;display:flex;gap:1rem;}
+  header nav a {text-decoration:none;color:#333;transition:color .3s;}
+  header nav a:hover {color:#1b66c9;}
+  .hero {height:100vh;background:url('{{ url_for('static', filename='assets/hero.svg') }}') center/cover no-repeat;display:flex;flex-direction:column;justify-content:center;align-items:center;color:#fff;text-align:center;}
+  .hero h1 {font-size:3rem;margin-bottom:.5rem;}
+  .hero p {font-size:1.2rem;}
+  .btn {display:inline-block;margin-top:1.5rem;padding:.8rem 1.6rem;background:#1b66c9;color:#fff;text-decoration:none;border-radius:4px;transition:background .3s;}
+  .btn:hover {background:#134d99;}
+  section {padding:4rem 1rem;scroll-margin-top:70px;}
+  .container {max-width:1200px;margin:auto;}
+  .grid {display:flex;flex-wrap:wrap;gap:2rem;align-items:center;}
+  .grid img {width:100%;max-width:500px;border-radius:8px;}
+  .features {display:flex;flex-wrap:wrap;gap:2rem;justify-content:space-between;margin-top:2rem;}
+  .feature {flex:1 1 200px;text-align:center;}
+  .feature img {width:60px;height:60px;margin-bottom:1rem;object-fit:contain;}
+  #partners .logo-slider{overflow:hidden;white-space:nowrap;}
+  #partners .logo{display:inline-block;width:120px;height:50px;background:#eee;color:#333;margin:0 10px;line-height:50px;text-align:center;font-size:14px;border-radius:4px;animation:slide 20s linear infinite;}
+  @keyframes slide{0%{transform:translateX(100%);}100%{transform:translateX(-100%);}}
+  .cta {background:#1b66c9;color:#fff;text-align:center;padding:3rem 1rem;}
+  footer {background:#222;color:#ccc;text-align:center;padding:2rem 1rem;font-size:.9rem;}
+  .iframe-wrapper{width:100%;max-width:600px;height:400px;border:1px solid #ccc;overflow:hidden;margin:auto;}
+  .iframe-wrapper iframe{width:133.33%;height:133.33%;transform:scale(0.75);transform-origin:top left;border:none;}
+  html {scroll-behavior:smooth;}
+
+  @media (max-width: 768px) {
+    header .container {flex-direction:column;gap:.5rem;}
+    header nav ul {flex-direction:column;gap:.5rem;}
+    .hero h1 {font-size:2rem;}
+    .hero p {font-size:1rem;}
+    .grid {flex-direction:column;}
+    .iframe-wrapper {height:auto;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <div class="logo">HydroFlow Console</div>
+    <nav>
+      <ul>
+        <li><a href="#inicio">Inicio</a></li>
+        <li><a href="#quees">Qué es</a></li>
+        <li><a href="#func">Funciones</a></li>
+        <li><a href="#demo">Demo</a></li>
+        <li><a href="#partners">Partners</a></li>
+        <li><a href="#contacto">Contacto</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<section id="inicio" class="hero">
+  <h1>HydroFlow Console</h1>
+  <p>Gestión inteligente de infraestructuras hídricas</p>
+  <a href="#demo" class="btn">Explorar la demo</a>
+</section>
+
+<section id="team" class="container py-4">
+  <h2>Equipo de HydroConsole:</h2>
+  <ul>
+    {% for full, user, role in team_members %}
+    <li>{{ full }} (@{{ user }}) - {{ role|capitalize }}</li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section id="quees">
+  <div class="container grid">
+    <img src="{{ url_for('static', filename='assets/panel.svg') }}" alt="Panel">
+    <div>
+      <h2>¿Qué es HydroFlow Console?</h2>
+      <p>HydroFlow Console es una plataforma modular para monitorizar y automatizar presas y estaciones hidroeléctricas. Permite supervisar compuertas, simular condiciones meteorológicas y calcular presión, caudal y potencia generada.</p>
+      <p>Creada por ingenieros expertos, HydroFlow Console integra modelos hidráulicos para prever la evolución del embalse minuto a minuto y ajustar las turbinas para obtener el máximo rendimiento energético.</p>
+      <p>El sistema registra históricos de caudal y genera informes detallados para los técnicos. Gracias a la simulación es posible probar diferentes escenarios de lluvia o sequía sin riesgo.</p>
+      <p>Con una interfaz clara, cualquier operario puede vigilar el estado de la presa y reaccionar a tiempo ante situaciones de riesgo.</p>
+    </div>
+  </div>
+</section>
+
+<section id="func" class="dark">
+  <div class="container">
+    <h2>Funcionalidades</h2>
+    <div class="features">
+      <div class="feature">
+        <img src="{{ url_for('static', filename='assets/feature-monitor.svg') }}" alt="">
+        <h3>Supervisión en tiempo real</h3>
+      </div>
+      <div class="feature">
+        <img src="{{ url_for('static', filename='assets/feature-control.svg') }}" alt="">
+        <h3>Control remoto de compuertas</h3>
+      </div>
+      <div class="feature">
+        <img src="{{ url_for('static', filename='assets/feature-cloud.svg') }}" alt="">
+        <h3>Simulación climática</h3>
+      </div>
+      <div class="feature">
+        <img src="{{ url_for('static', filename='assets/feature-security.svg') }}" alt="">
+        <h3>Seguridad y diagnóstico remoto</h3>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="demo">
+  <div class="container grid">
+    <div class="iframe-wrapper">
+      <iframe src="{{ iframe_src }}"></iframe>
+    </div>
+    <div>
+      <h2>Demo interactiva</h2>
+      <p>Observa cómo responde el sistema ante lluvias intensas o presión crítica.</p>
+    </div>
+  </div>
+</section>
+<p>La demostración reproduce un cuadro de mando similar al de las instalaciones reales, permitiendo ajustar compuertas y observar el efecto inmediato en el caudal y la presión.</p>
+<p>Cada gráfico refleja la evolución del sistema con cálculos de física realista, para que los operarios se habitúen a la interfaz antes de trabajar en la presa.</p>
+
+<section id="revenue">
+  <div class="container text-center">
+    <h2>Ventas de energía</h2>
+    <p>Precio actual: <strong id="price_live">0.0000</strong> €/kWh</p>
+    <p>Cliente seleccionado: <strong id="client_live">-</strong></p>
+    <p>Ganancia acumulada: <strong id="rev_live">0.00</strong> €</p>
+  </div>
+</section>
+<p>Gracias a la integración con el mercado eléctrico, HydroFlow Console calcula la oferta más rentable en cada momento, mostrando al instante el beneficio obtenido por la central.</p>
+
+<section id="partners" class="dark">
+  <div class="container">
+    <h2>Nuestros partners</h2>
+    <p>Ya confían en nosotros operadores hidráulicos y entidades energéticas.</p>
+    <div class="logo-slider">
+      {% for i in range(20) %}
+      <div class="logo">Partner {{ i+1 }}</div>
+      {% endfor %}
+    </div>
+<p>Nuestra red de colaboradores abarca empresas de ingeniería, universidades y proveedores de tecnología punteros que aportan conocimiento y respaldo a la plataforma.</p>
+  </div>
+</section>
+
+<section id="contacto" class="cta">
+  <h2>¿Quieres probar HydroFlow Console?</h2>
+  <a href="/" class="btn">Lanza la demo</a>
+<p>HydroFlow Console es el resultado de años de investigación en energías renovables. Nuestro simulador permite evaluar estrategias de explotación y seguridad antes de aplicarlas sobre la infraestructura real.</p>
+</section>
+
+<footer>
+  HydroFlow Solutions &copy; 2025 · Aviso legal
+  <a href="/login" class="btn btn-primary mt-2">Accede a la Intranet</a>
+  <div>Redes sociales</div>
+</footer>
+<script>
+async function refreshRevenue(){
+  const r = await fetch('/state');
+  const data = await r.json();
+  document.getElementById('price_live').textContent = data.price_eur.toFixed(4);
+  document.getElementById('client_live').textContent = data.current_client;
+  document.getElementById('rev_live').textContent = data.revenue_total.toFixed(2);
+}
+setInterval(refreshRevenue, 5000);
+refreshRevenue();
+</script>
+</body>
+</html>
