@@ -1,5 +1,7 @@
 # HydroFlow Console
-
+<center>
+<img src="background.png" width="100%"/>
+</center>
 HydroFlow Console es un simulador sencillo de la Central Hidráulica Sierra Azul. Sirve para recrear, con un enfoque didáctico, cómo sería el panel de control de una planta hidroeléctrica.
 
 ## Instalación y puesta en marcha
