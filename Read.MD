@@ -1,305 +1,308 @@
-Perfecto, aquí tienes el README reestructurado con secciones primero en inglés y luego en español, completamente separadas. Al final te añado los badges para stars, forks y licencia.
-
-⸻
-
-💧 HydroFlow Console
-
+# HydroFlow Console
 <p align="center">
   <img src="background.png" width="100%" alt="HydroFlow Console banner">
 </p>
+**HydroFlow Console** is a didactic simulator of a hydroelectric control panel. It mimics the physical behavior of a dam with turbines, gates, and environmental conditions. The application includes a deliberately insecure implementation of session handling using `pickle` and is meant for educational use only.
 
 
 
-⸻
+## 🚀 Installation
 
-🇬🇧 English Version
-
-🧭 Description
-
-HydroFlow Console is an interactive simulator of a fictional hydroelectric power plant designed for educational purposes. It combines basic physics simulation (gates, turbines, pressure, power, weather) with an intentionally insecure deserialization vulnerability via Python pickle.
-It’s ideal for learning applied physics and offensive security in a controlled and realistic environment.
-
-⸻
-
-⚙️ Installation & Setup
-	1.	Install dependencies:
-
+```bash
 pip install -r requirements.txt
-
-
-	2.	Run the application:
-
 python app.py
+````
+
+Access the login page at `/login`. Only user `l.perez` can log in without a password. After login, go to `/dashboard` to see the control panel. Use `/logout` to sign out. The homepage `/` displays a welcome page with team info.
 
 
-	3.	Access the login page: /login.
-	4.	Use any username and password (only l.perez can log in without a password).
-	5.	Open /dashboard to access the main panel.
 
-⸻
+## 🔐 Authentication
 
-🔐 Authentication & Session Cookies
-
-Session cookies are serialized using Python’s pickle and then base64-encoded. Each cookie stores a dictionary with the user’s name and role (viewer, engineer, admin).
-
-Although the cookie looks like editable text, it contains binary data. To successfully modify it, one must:
-	1.	Decode the base64 string.
-	2.	Use pickle.loads() to deserialize it.
-	3.	Change values (e.g. elevate role to admin).
-	4.	Serialize again with pickle.dumps().
-	5.	Encode back to base64 and inject it into the browser.
-
-Note: Editing the base64 directly (e.g. with a text editor) breaks the binary format. Manual tampering is not enough — it requires proper serialization/deserialization.
-
-⸻
-
-🧠 Simulation Logic
-
-Every 3 seconds, a loop updates:
-	•	Weather conditions (sunny, rain, heavy rain)
-	•	Water inflow into the dam
-	•	Reservoir level and pressure
-	•	Turbine RPM and temperature
-	•	Power generation
-	•	System failures (collapse, overload, turbine breakdown)
-
-Key constants
-
-Parameter	Value
-Max level	250 m
-Max pressure	100 bar
-Max RPM	5000 rpm
-Max power	200 MW
-Gates	5
+The login form collects a username and password. A valid login generates a `session` cookie with a dictionary containing the username and role (`viewer`, `engineer`, or `admin`). The cookie is serialized with `pickle` and base64-encoded. On `/dashboard`, this cookie is deserialized to control user access.
 
 
-⸻
 
-💣 Failure Conditions
-	•	Collapse: if pressure > 100 bar or max level holds too long.
-	•	Electrical overload: if power > 200 MW.
-	•	Turbine damage: if RPM exceeds 5000.
+## 🧪 Cookie Exploitation
 
-When failure occurs:
-	•	All system values reset to 0.
-	•	/dashboard shows a 500 error page.
-	•	Flag: flag{electric_power} is revealed.
+Since the session cookie is not signed or encrypted, it can be manipulated. By decoding it from base64, editing the `role`, and re-encoding it, you can escalate privileges. For example, changing `role: viewer` to `admin` gives full access.
 
-⸻
+The deserialization uses:
 
-📡 Firmware & Autopilot
+```python
+pickle.loads(base64.b64decode(request.cookies.get("session")))
+```
 
-The autopilot keeps pressure between 45–55 bar by opening/closing gates.
-Admins can upload plain-text firmware files via /firmware/update to control system behavior.
+This is insecure by design and allows injection of malicious objects if not properly validated.
 
-Example:
 
-autopilot: off
+
+## ⚙️ Simulation and Physical Model
+
+At launch, all gates are closed, and turbines are off. A background thread updates the simulation every 3 seconds.
+
+### Constants and Variables
+
+* `NUM_GATES` = 5
+* `MAX_LEVEL` = 250 m
+* `DAM_AREA` = 1000 m²
+* `WATER_DENSITY` = 1000 kg/m³
+* `GRAVITY` = 9.81 m/s²
+* `RPM_MIN` = 2000, `RPM_WARN` = 4500, `RPM_MAX` = 5000
+* `PRESSURE_MAX` = 100 bar
+* `POWER_MAX` = 200 MW
+
+### Weather and Inflow
+
+Random weather affects inflow:
+
+* Sunny → 0.2 m³/s
+* Rain → 1.0 m³/s
+* Heavy rain → 2.7 m³/s + 60s timer
+
+### Water Dynamics
+
+Outflow depends on open gates:
+
+```python
+flow = open_gates * 1.0
+water_level += inflow - flow
+```
+
+Pressure is calculated:
+
+```python
+pressure = water_level * 1.12
+```
+
+
+
+### Turbines and Power
+
+Turbines activate if more than two gates are open:
+
+```python
+target_rpm = max(pressure * 8, RPM_MIN)
+```
+
+Each 1000 rpm adds 1 °C to turbine temp. Power output:
+
+```python
+P = ρ * g * Q * H / 1_000_000
+```
+
+
+
+### Failure Conditions
+
+* **Dam collapse**: pressure > 100 bar or overflow for over 60s
+* **Overload**: power > 200 MW
+
+Triggers a 500 error with `flag{electric_power}`.
+
+
+
+## 💻 Interface
+
+The dashboard uses Bootstrap and Chart.js to show:
+
+* Water level
+* Pressure
+* Outflow
+* RPM & temperature
+* Generated power
+
+Admins can open/close gates and update firmware. Weather includes humidity and wind. A mini-navbar displays the logged user and logout option.
+
+
+
+## ⚙️ Firmware & Autopilot
+
+The autopilot keeps pressure between 45–55 bar. It can be toggled by uploading a `firmware7331.bin` file to `/firmware/update` with these lines:
+
+```
+autopilot: on
 warnings: on
+```
 
-⚠️ The firmware system lacks validation, allowing unauthorized instructions or logic injections.
-
-⸻
-
-🎛️ Interface
-	•	Built with Flask + Bootstrap.
-	•	Real-time dashboard with water level, pressure, RPM, temperature, power.
-	•	Weather status includes wind, temperature, and humidity.
-	•	Prices fluctuate each second based on energy providers (e.g. GreenGrid, EnerCo).
-	•	Interface responds to role-based access: viewer, engineer, or admin.
-
-⸻
-
-🧨 Exploit Scripts
-
-Two exploitation scripts are provided in /Exploit/:
-	•	exploit.py: uses Selenium to hijack a session and upload firmware.
-	•	exploitv2.py: lightweight version using urllib, performs cookie forgery and disables autopilot.
-
-Both lead to a system failure that displays the flag.
-
-⸻
-
-📁 Project Structure
-
-.
-├── app.py
-├── templates/
-│   ├── dashboard.html
-│   ├── error.html
-├── static/
-├── Exploit/
-│   ├── exploit.py
-│   ├── exploitv2.py
-├── firmware_uploads/
-├── requirements.txt
-└── README.md
+Admins have a shortcut to the update page. The default firmware is included in `firmware_uploads/`.
 
 
-⸻
 
-🎯 Why Use HydroFlow?
-	•	Demonstrate insecure deserialization.
-	•	Explore ICS/SCADA concepts.
-	•	Simulate industrial systems in a safe lab.
-	•	Perfect for red teaming, teaching, or internal workshops.
+## 🧑‍💻 Exploit Scripts
 
-⸻
+In the `Exploit/` folder:
 
-🏷️ Topics
+* `exploit.py`: uses Selenium to hijack a browser, modify the cookie, and upload firmware.
+* `exploitv2.py`: uses `urllib` to forge a cookie, disable autopilot, and trigger a system fail.
 
-scada water-systems ctf training deserialization pickle docker flask simulator firmware hacking iot cybersec vulnerable-app red-team infosec educational python3
+Both demonstrate the security flaws via manipulated cookies and firmware.
 
 
-⸻
 
-🇪🇸 Versión en Español
+## 🛑 Disclaimer
 
-🧭 Descripción
+**This project is for educational use only.** Never use `pickle` with user-controlled data in real applications.
 
-HydroFlow Console es un simulador interactivo de una planta hidroeléctrica ficticia diseñado con fines educativos.
-Reproduce comportamientos físicos básicos (compuertas, turbinas, presión, potencia, clima) e implementa intencionadamente una vulnerabilidad crítica de deserialización insegura mediante pickle en Python.
-Es ideal para aprender física aplicada y ciberseguridad ofensiva en un entorno seguro y realista.
 
-⸻
 
-⚙️ Instalación y ejecución
-	1.	Instala las dependencias:
+## 🧑 Author
 
+Created by **Jordi Serrano (@j0rd1s3rr4n0)**
+
+
+
+
+
+# HydroFlow Console (español)
+
+**HydroFlow Console** es un simulador didáctico del panel de control de una central hidroeléctrica. Recrea el comportamiento físico de una presa con turbinas, compuertas y condiciones meteorológicas. La aplicación incluye una vulnerabilidad intencionada basada en `pickle`, pensada para fines educativos.
+
+
+
+## 🚀 Instalación
+
+```bash
 pip install -r requirements.txt
-
-
-	2.	Lanza la aplicación:
-
 python app.py
+```
+
+Accede a `/login` e introduce usuario y contraseña (solo `l.perez` puede entrar sin contraseña). Luego abre `/dashboard`. Usa `/logout` para cerrar sesión. La página principal (`/`) muestra un mensaje de bienvenida y el equipo.
 
 
-	3.	Accede a /login con cualquier usuario y contraseña (solo l.perez entra sin password).
-	4.	Abre /dashboard para ver el panel principal.
 
-⸻
+## 🔐 Autenticación
 
-🔐 Autenticación y cookies de sesión
-
-Las cookies de sesión están serializadas con pickle y codificadas en base64. Cada cookie contiene un diccionario con el nombre y rol del usuario (viewer, engineer, admin).
-
-Aunque parezcan modificables a simple vista, contienen datos binarios. Para manipularlas correctamente:
-	1.	Decodifica el base64.
-	2.	Usa pickle.loads() para obtener el objeto.
-	3.	Modifica el campo role.
-	4.	Vuelve a serializar con pickle.dumps().
-	5.	Codifica de nuevo en base64 y úsala como cookie.
-
-Importante: Editar el base64 directamente corrompe la cookie. Se requiere deserialización completa.
-
-⸻
-
-🧠 Lógica de simulación
-
-Cada 3 segundos se simulan:
-	•	El clima (soleado, lluvia, lluvia fuerte)
-	•	Entrada de agua
-	•	Nivel del embalse y presión
-	•	RPM y temperatura de turbinas
-	•	Potencia generada
-	•	Fallos físicos y colapsos
-
-Constantes clave
-
-Parámetro	Valor
-Nivel máximo	250 m
-Presión máxima	100 bar
-RPM máxima	5000 rpm
-Potencia máxima	200 MW
-Número de compuertas	5
+El login genera una cookie `session` con un diccionario que contiene nombre de usuario y rol (`viewer`, `engineer` o `admin`). Esta cookie se serializa con `pickle` y se codifica con base64. Al entrar en `/dashboard`, se decodifica y se otorgan permisos según el rol.
 
 
-⸻
 
-💣 Condiciones de fallo
-	•	Colapso si presión > 100 bar o nivel > 250 m sin abrir compuertas.
-	•	Sobrecarga eléctrica si la potencia excede 200 MW.
-	•	Rotura de turbina si supera las 5000 rpm.
+## 🧪 Explotación de la cookie
 
-En caso de fallo:
-	•	Todo se reinicia a 0.
-	•	El panel muestra error 500.
-	•	Se revela la flag: flag{electric_power}.
+Como la cookie no está firmada ni cifrada, se puede manipular. Basta con decodificarla desde base64, cambiar `role` a `admin`, volver a codificarla y recargar. El servidor la deserializa con:
 
-⸻
+```python
+pickle.loads(base64.b64decode(request.cookies.get("session")))
+```
 
-📡 Firmware y piloto automático
+Esto es inseguro por diseño y permite incluso inyección de objetos maliciosos.
 
-El autopilot regula la presión entre 45 y 55 bar.
-Los administradores pueden subir firmware en texto plano vía /firmware/update.
 
-Ejemplo:
 
-autopilot: off
+## ⚙️ Simulación y modelo físico
+
+Al arrancar, todas las compuertas están cerradas y las turbinas apagadas. Un hilo de fondo actualiza el estado cada 3 segundos.
+
+### Constantes y variables
+
+* `NUM_GATES` = 5
+* `MAX_LEVEL` = 250 m
+* `DAM_AREA` = 1000 m²
+* `WATER_DENSITY` = 1000 kg/m³
+* `GRAVITY` = 9.81 m/s²
+* `RPM_MIN` = 2000, `RPM_WARN` = 4500, `RPM_MAX` = 5000
+* `PRESSURE_MAX` = 100 bar
+* `POWER_MAX` = 200 MW
+
+
+
+### Clima e inflow
+
+Cada ciclo genera un clima aleatorio:
+
+* Soleado → 0.2 m³/s
+* Lluvia → 1.0 m³/s
+* Lluvia fuerte → 2.7 m³/s + temporizador de 60s
+
+
+
+### Dinámica del agua
+
+El caudal depende del número de compuertas abiertas:
+
+```python
+flow = open_gates * 1.0
+water_level += inflow - flow
+```
+
+La presión se calcula así:
+
+```python
+pressure = water_level * 1.12
+```
+
+
+
+### Turbinas y potencia
+
+Si hay más de dos compuertas abiertas:
+
+```python
+target_rpm = max(pressure * 8, RPM_MIN)
+```
+
+Cada 1000 rpm añade 1 °C. La potencia generada:
+
+```python
+P = ρ * g * Q * H / 1_000_000
+```
+
+
+
+### Condiciones de fallo
+
+* **Colapso de presa**: presión > 100 bar o desbordamiento constante
+* **Sobrecarga eléctrica**: potencia > 200 MW
+
+Activa error 500 con `flag{electric_power}`.
+
+
+
+## 💻 Interfaz
+
+El dashboard usa Bootstrap y Chart.js para mostrar:
+
+* Nivel de agua
+* Presión
+* Caudal
+* RPM y temperatura
+* Potencia generada
+
+Admins pueden abrir compuertas y subir firmware. El clima incluye humedad y viento. Hay una cabecera con usuario y logout.
+
+
+
+## ⚙️ Firmware y autopilot
+
+El autopilot mantiene la presión entre 45 y 55 bar. Se puede desactivar subiendo un fichero `firmware7331.bin` a `/firmware/update` con:
+
+```
+autopilot: on
 warnings: on
+```
 
-⚠️ No hay validación de firmware, lo que permite la ejecución de comandos no autorizados.
-
-⸻
-
-🎛️ Interfaz
-	•	Interfaz con Flask + Bootstrap.
-	•	Dashboard en tiempo real con nivel de agua, presión, temperatura, potencia, RPM.
-	•	El clima incluye humedad, viento y temperatura.
-	•	Los precios se actualizan cada segundo según la mejor oferta energética.
-	•	Acceso a funciones según rol.
-
-⸻
-
-🧨 Scripts de explotación
-
-Incluye dos scripts en /Exploit/:
-	•	exploit.py: usa Selenium para forjar la cookie y subir firmware.
-	•	exploitv2.py: versión ligera con urllib.
-
-Ambos scripts fuerzan un fallo que muestra la flag.
-
-⸻
-
-📁 Estructura del proyecto
-
-.
-├── app.py
-├── templates/
-│   ├── dashboard.html
-│   ├── error.html
-├── static/
-├── Exploit/
-├── firmware_uploads/
-├── requirements.txt
-└── README.md
+El firmware por defecto está en `firmware_uploads/`.
 
 
-⸻
 
-🎯 ¿Por qué usar HydroFlow?
-	•	Demuestra errores reales como deserialización insegura.
-	•	Útil para clases, talleres, CTFs, formaciones internas.
-	•	Simulación de sistemas industriales críticos.
-	•	Ideal para aprender a explotar vulnerabilidades en entornos seguros.
+## 🧑‍💻 Scripts de exploit
 
-⸻
+En la carpeta `Exploit/`:
 
-🏷️ Temas
+* `exploit.py`: usa Selenium para modificar la cookie y subir firmware.
+* `exploitv2.py`: usa `urllib` para escalar privilegios y desactivar el autopilot.
 
-scada sistemas-de-agua ctf formación deserialización pickle docker flask simulador firmware hacking iot ciberseguridad app-vulnerable red-team infosec educativo python3
+Demuestran cómo modificar la lógica de la app sin autenticación real.
 
 
-⸻
 
-🧷 Badges (Opcionales)
+## ⚠️ Aviso legal
 
-Añade esto arriba del README si deseas mostrar estadísticas visuales:
+**Este proyecto es solo para fines educativos.** No uses `pickle` con datos controlados por el usuario en apps reales.
 
-![GitHub stars](https://img.shields.io/github/stars/tu_usuario/HydroFlow-Console?style=social)
-![GitHub forks](https://img.shields.io/github/forks/tu_usuario/HydroFlow-Console?style=social)
-![GitHub license](https://img.shields.io/github/license/tu_usuario/HydroFlow-Console)
 
-Solo reemplaza tu_usuario por tu nombre de usuario de GitHub. Si quieres, también te lo preparo con los links ya personalizados.
 
-¿Quieres que te lo convierta todo en un README.md listo para pegar o subir?
+## 👤 Autor
+
+Creado por **Jordi Serrano (@j0rd1s3rr4n0)**
+<!-- [LinkedIn](https://www.linkedin.com/in/tramunthack) | [X (Twitter)](https://x.com/tramunthack)-->
