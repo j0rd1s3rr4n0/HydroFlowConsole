@@ -1,7 +1,9 @@
 # HydroFlow Console
+
 <p align="center">
   <img src="background.png" width="100%" alt="HydroFlow Console banner">
 </p>
+
 **HydroFlow Console** is a didactic simulator of a hydroelectric control panel. It mimics the physical behavior of a dam with turbines, gates, and environmental conditions. The application includes a deliberately insecure implementation of session handling using `pickle` and is meant for educational use only.
 
 
@@ -26,6 +28,21 @@ The login form collects a username and password. A valid login generates a `sess
 ## 🧪 Cookie Exploitation
 
 Since the session cookie is not signed or encrypted, it can be manipulated. By decoding it from base64, editing the `role`, and re-encoding it, you can escalate privileges. For example, changing `role: viewer` to `admin` gives full access.
+
+> ⚠️ You might try decoding the `session` cookie with a tool like Python or CyberChef, and you’ll likely see something readable like:
+>
+> ```python
+> {'user': 'john.doe', 'role': 'viewer'}
+> ```
+>
+> But if you edit that, change `'viewer'` to `'admin'`, re-encode it in base64 and send it back... the server **still won't accept it**. Why?
+>
+> Because `pickle` uses a **binary serialization format**, not plain text. Simply editing the readable string can break the structure internally.
+>
+> Any mismatch in length, type, or structure will make `pickle.loads()` throw an exception.
+>
+> This demonstrates that although the cookie isn't signed or encrypted, **it's not trivial to tamper with** unless you recreate the binary payload properly using Python.
+
 
 The deserialization uses:
 
@@ -179,7 +196,24 @@ El login genera una cookie `session` con un diccionario que contiene nombre de u
 
 ## 🧪 Explotación de la cookie
 
-Como la cookie no está firmada ni cifrada, se puede manipular. Basta con decodificarla desde base64, cambiar `role` a `admin`, volver a codificarla y recargar. El servidor la deserializa con:
+Como la cookie no está firmada ni cifrada, se puede manipular. Basta con decodificarla desde base64, cambiar `role` a `admin`, volver a codificarla y recargar. 
+
+> ⚠️ Puedes intentar decodificar la cookie `session` usando Python o CyberChef, y verás algo como:
+>
+> ```python
+> {'user': 'john.doe', 'role': 'viewer'}
+> ```
+>
+> Pero si modificas `'viewer'` por `'admin'`, vuelves a codificarla en base64 y la envías… el servidor **no la acepta**. ¿Por qué?
+>
+> Porque `pickle` utiliza un **formato binario**, no texto plano. Al cambiar manualmente el contenido, puedes romper su estructura interna.
+>
+> Si la longitud o el tipo no coinciden, `pickle.loads()` lanzará una excepción.
+>
+> Esto demuestra que, aunque la cookie no esté firmada ni cifrada, **no es tan fácil manipularla a mano** si no sabes recrear el binario con precisión.
+
+
+El servidor la deserializa con:
 
 ```python
 pickle.loads(base64.b64decode(request.cookies.get("session")))
